@@ -6,11 +6,37 @@ import nacl.utils
 import base64
 import time
 import json
+#from example_client import ping
 
 startHTML = "<html><head><title>CS302 example</title><link rel='stylesheet' href='/static/example.css' /></head><body>"
 
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 timing = str(time.time())
+
+class apiList(object):
+    
+	#CherryPy Configuration
+    _cp_config = {'tools.encode.on': True, 
+                  'tools.encode.encoding': 'utf-8',
+                  'tools.sessions.on' : 'True',
+                 }      
+    @cherrypy.expose              
+    def rx_broadcast(self):
+        received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
+
+        message = received_data.get('message').encode('utf-8')
+        print("Broadcast:")
+        print(message)
+
+        response = {
+            'response':'ok'
+        }
+        response = json.dumps(response)
+        return (response)
+
+
+   
+
 
 
 class MainApp(object):
@@ -63,13 +89,18 @@ class MainApp(object):
     @cherrypy.expose
     def signin(self, username=None, password=None):
         """Check their name and password and send them either to the main page, or back to the main login screen."""
-        error = authoriseUserLogin(username, password)
+        error = MainApp.ping(self,username, password)
         if error == 0:
             cherrypy.session['username'] = username
             cherrypy.session['password'] = password
-            report(username,password)
-            print("Watch Carole & Tuesday")
-            broadcast(username,password)
+            MainApp.report(self,username,password)
+            
+            MainApp.listusers(self,username,password)
+            
+            MainApp.broadcast(self,username,password)
+            MainApp.receive_message(self)
+            
+            
         #    pubkeyAutho()
             raise cherrypy.HTTPRedirect('/')
         else:
@@ -84,6 +115,235 @@ class MainApp(object):
         else:
             cherrypy.lib.sessions.expire()
         raise cherrypy.HTTPRedirect('/')
+    @cherrypy.expose
+    def report(self,username,password):
+
+    # Serialize the verify key to send it to a third party
+            signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+            verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
+            pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
+            credentials = ('%s:%s' % (username, password))
+            b64_credentials = base64.b64encode(credentials.encode('ascii'))
+            headers = {
+                'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+                'Content-Type' : 'application/json; charset=utf-8',
+            }
+            pubkey_hex_str = pubkey_hex.decode('utf-8')
+
+            message_bytes = bytes(pubkey_hex_str + username, encoding='utf-8')
+            signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
+
+            signature_hex_str = signed.signature.decode('utf-8')
+
+            addkey_url = "http://cs302.kiwi.land/api/report"
+
+            payload = {
+                "connection_location": "2",
+                "connection_address": "172.23.155.225",
+                "incoming_pubkey": pubkey_hex_str
+        
+            }
+            json_payload = json.dumps(payload)
+            byte_payload = bytes(json_payload, "utf-8")
+
+            try:   
+                req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
+                response = urllib.request.urlopen(req)
+            except urllib.error.HTTPError as err:
+                print("Error: " + str(err.code))
+            else:
+                data = response.read() # read the received bytes
+                encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+                response.close()
+
+                JSON_object = json.loads(data.decode(encoding))
+                print(JSON_object)
+
+    @cherrypy.expose
+    def ping(self,username,password):
+
+     # Serialize the verify key to send it to a third party
+        signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+        verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
+        pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
+    
+        pubkey_hex_str = pubkey_hex.decode('utf-8')
+   
+        message_bytes = bytes(pubkey_hex_str, encoding='utf-8')
+        signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
+
+        signature_hex_str = signed.signature.decode('utf-8')
+
+        addkey_url = "http://cs302.kiwi.land/api/ping"
+
+        #create HTTP BASIC authorization header
+        credentials = ('%s:%s' % (username, password))
+        b64_credentials = base64.b64encode(credentials.encode('ascii'))
+        headers = {
+            'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+            'Content-Type' : 'application/json; charset=utf-8',
+        }
+
+        payload = {
+            "pubkey": pubkey_hex_str,
+            #"username": username,
+            "signature": signature_hex_str,
+        }
+        json_payload = json.dumps(payload)
+        byte_payload = bytes(json_payload, "utf-8")
+
+        try:   
+            req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
+            response = urllib.request.urlopen(req)
+        except urllib.error.HTTPError as err:
+            print("Error: " + str(err.code))
+        else:
+            data = response.read() # read the received bytes
+            encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+            response.close()
+
+            JSON_object = json.loads(data.decode(encoding))
+            if (JSON_object["authentication"] == "error"):
+                return 1
+            else:
+                print(json.dumps(JSON_object,indent=4))
+                return 0
+    @cherrypy.expose
+    def listusers(self,username,password):
+        
+        addkey_url = "http://cs302.kiwi.land/api/list_users"
+        credentials = ('%s:%s' % (username, password))
+        b64_credentials = base64.b64encode(credentials.encode('ascii'))
+        headers = {
+            'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+            'Content-Type' : 'application/json; charset=utf-8',
+        }
+
+        #create request and open it into a response object
+        req = urllib.request.Request(url=addkey_url, headers=headers)
+        response = urllib.request.urlopen(req)
+        #read and process the received bytes
+
+        data = response.read() # read the received bytes
+        encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+        response.close()
+
+        JSON_object = json.loads(data.decode(encoding))
+        print(json.dumps(JSON_object,indent=4))
+
+
+    @cherrypy.expose    
+    def get_privatedata(self,username,password):
+
+        addkey_url = "http://cs302.kiwi.land/api/get_privatedata"
+        credentials = ('%s:%s' % (username, password))
+        b64_credentials = base64.b64encode(credentials.encode('ascii'))
+        headers = {
+            'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+            'Content-Type' : 'application/json; charset=utf-8',
+        }
+    
+    #create request and open it into a response object
+
+    #read and process the received bytes
+
+    #create request and open it into a response object
+        try:
+            req = urllib.request.Request(url=addkey_url, headers=headers)
+            response = urllib.request.urlopen(req)
+
+        except urllib.error.HTTPError as err:
+            print("Error: " + str(err.code))
+        else:
+            data = response.read() # read the received bytes
+            encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+            response.close()
+
+            JSON_object = json.loads(data.decode(encoding))
+            if JSON_object["privatedata"] == "7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5":
+                print(json.dumps(JSON_object,indent=4))
+                return JSON_object["privatedata"]
+
+            else:
+                return 1
+
+    @cherrypy.expose
+    def broadcast(self,username,password):
+        timing = str(time.time())
+        ENCODING = 'utf-8'
+
+        login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
+        signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+
+        # Serialize the verify key to send it to a third party
+    #verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
+        pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
+        
+        pubkey_hex_str = pubkey_hex.decode(ENCODING)
+
+        message = "Hello there"
+
+        message_bytes = bytes(login_server_record + message + timing, encoding=ENCODING)
+        signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
+
+        signature_hex_str = signed.signature.decode(ENCODING)
+
+        addkey_url = "http://172.23.155.225:80/api/rx_broadcast"
+
+        credentials = ('%s:%s' % (username, password))
+        b64_credentials = base64.b64encode(credentials.encode('ascii'))
+        headers = {
+            'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+            'Content-Type' : 'application/json; charset=utf-8',
+        }
+
+        payload = {
+            "loginserver_record": login_server_record,
+            "message": message,
+            "sender_created_at": timing,
+            "signature": signature_hex_str
+        }
+        json_payload = json.dumps(payload)
+        byte_payload = bytes(json_payload, ENCODING)
+
+        try:   
+            req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
+            response = urllib.request.urlopen(req)
+        except urllib.error.HTTPError as err:
+            print("Error: " + str(err.code))
+        else:
+            data = response.read() # read the received bytes
+            encoding = response.info().get_content_charset(ENCODING) #load encoding if possible (default to utf-8)
+            response.close()
+
+            JSON_object = json.loads(data.decode(encoding))
+            print(JSON_object)
+
+            # received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
+            response = JSON_object.get('response')
+            print("Broadcast:")
+            print(response)
+
+            # response = {
+            # 'response : ok'
+            # }
+
+            # response = json.dumps(response)
+            # print(response)
+
+    @cherrypy.expose
+    def receive_message(self):
+        print("receiving message")
+
+
+    
+# def authoriseUserLogin(username, password):
+#     print("Log on attempt from {0}:{1}".format(username, password))
+#     #ping(username,password)
+#     pubhexstr = (MainApp.get_privatedata(username = username,password = password))
+#     # report(username,password)
+#     return (MainApp.ping(username,password))
+
 
 
 ###
@@ -123,6 +383,8 @@ def pubkeyAutho():
     json_payload = json.dumps(payload)
     byte_payload = bytes(json_payload, "utf-8")
 
+
+
    # try:
    #     req = urllib.request.Request(addkey_url, data=byte_payload, headers=headers)
    #    response = urllib.request.urlopen(req)
@@ -143,197 +405,182 @@ def pubkeyAutho():
    # else:
    #     print ("Fail")
    #     return 1pubk
-
-def ping(username,password):
-
-    # Serialize the verify key to send it to a third party
-    signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
-    verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
-    pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
+# @cherrypy.expose
+# def listusers(username,password):
     
-    pubkey_hex_str = pubkey_hex.decode('utf-8')
-   
-    message_bytes = bytes(pubkey_hex_str, encoding='utf-8')
-    signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
+#     addkey_url = "http://cs302.kiwi.land/api/list_users"
+#     credentials = ('%s:%s' % (username, password))
+#     b64_credentials = base64.b64encode(credentials.encode('ascii'))
+#     headers = {
+#         'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+#         'Content-Type' : 'application/json; charset=utf-8',
+#     }
 
-    signature_hex_str = signed.signature.decode('utf-8')
+#     #create request and open it into a response object
+#     req = urllib.request.Request(url=addkey_url, headers=headers)
+#     response = urllib.request.urlopen(req)
+#     #read and process the received bytes
 
-    addkey_url = "http://cs302.kiwi.land/api/ping"
+#     data = response.read() # read the received bytes
+#     encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+#     response.close()
 
-    #create HTTP BASIC authorization header
-    credentials = ('%s:%s' % (username, password))
-    b64_credentials = base64.b64encode(credentials.encode('ascii'))
-    headers = {
-        'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
-        'Content-Type' : 'application/json; charset=utf-8',
-    }
+#     JSON_object = json.loads(data.decode(encoding))
+#     print(json.dumps(JSON_object,indent=4))
 
-    payload = {
-        "pubkey": pubkey_hex_str,
-        #"username": username,
-        "signature": signature_hex_str,
-    }
-    json_payload = json.dumps(payload)
-    byte_payload = bytes(json_payload, "utf-8")
 
-    try:   
-        req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
-        response = urllib.request.urlopen(req)
-    except urllib.error.HTTPError as err:
-        print("Error: " + str(err.code))
-    else:
-        data = response.read() # read the received bytes
-        encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
-        response.close()
+# @cherrypy.expose    
+# def get_privatedata(username,password):
 
-        JSON_object = json.loads(data.decode(encoding))
-        if (JSON_object["authentication"] == "error"):
-            return 1
-        else:
-            print(json.dumps(JSON_object,indent=4))
-            return 0
-    
-def get_privatedata(username,password):
-
-    addkey_url = "http://cs302.kiwi.land/api/get_privatedata"
-    credentials = ('%s:%s' % (username, password))
-    b64_credentials = base64.b64encode(credentials.encode('ascii'))
-    headers = {
-        'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
-        'Content-Type' : 'application/json; charset=utf-8',
-    }
+#     addkey_url = "http://cs302.kiwi.land/api/get_privatedata"
+#     credentials = ('%s:%s' % (username, password))
+#     b64_credentials = base64.b64encode(credentials.encode('ascii'))
+#     headers = {
+#         'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+#         'Content-Type' : 'application/json; charset=utf-8',
+#     }
  
-#create request and open it into a response object
+# #create request and open it into a response object
 
-#read and process the received bytes
+# #read and process the received bytes
 
-#create request and open it into a response object
-    try:
-        req = urllib.request.Request(url=addkey_url, headers=headers)
-        response = urllib.request.urlopen(req)
+# #create request and open it into a response object
+#     try:
+#         req = urllib.request.Request(url=addkey_url, headers=headers)
+#         response = urllib.request.urlopen(req)
 
-    except urllib.error.HTTPError as err:
-        print("Error: " + str(err.code))
-    else:
-        data = response.read() # read the received bytes
-        encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
-        response.close()
+#     except urllib.error.HTTPError as err:
+#         print("Error: " + str(err.code))
+#     else:
+#         data = response.read() # read the received bytes
+#         encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+#         response.close()
 
-        JSON_object = json.loads(data.decode(encoding))
-        if JSON_object["privatedata"] == "7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5":
-            print(json.dumps(JSON_object,indent=4))
-            return "7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5"
+#         JSON_object = json.loads(data.decode(encoding))
+#         if JSON_object["privatedata"] == "7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5":
+#             print(json.dumps(JSON_object,indent=4))
+#             return JSON_object["privatedata"]
 
-        else:
-            return 1
+#         else:
+#             return 1
 
+# @cherrypy.expose
+# def broadcast(username,password):
+#     timing = str(time.time())
+#     ENCODING = 'utf-8'
 
-def broadcast(username,password):
-    timing = str(time.time())
-    ENCODING = 'utf-8'
+#     login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
+#     signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
 
-    login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
-    signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
-
-    # Serialize the verify key to send it to a third party
-#verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
-    pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
+#     # Serialize the verify key to send it to a third party
+# #verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
+#     pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
     
-    pubkey_hex_str = pubkey_hex.decode(ENCODING)
+#     pubkey_hex_str = pubkey_hex.decode(ENCODING)
 
-    message = "Signed in from login_server"
+#     message = "Hello there"
 
-    message_bytes = bytes(login_server_record + message + timing, encoding=ENCODING)
-    signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
+#     message_bytes = bytes(login_server_record + message + timing, encoding=ENCODING)
+#     signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
 
-    signature_hex_str = signed.signature.decode(ENCODING)
+#     signature_hex_str = signed.signature.decode(ENCODING)
 
-    addkey_url = "http://cs302.kiwi.land/api/rx_broadcast"
+#     addkey_url = "http://172.23.155.225:80/api/rx_broadcast"
 
-    credentials = ('%s:%s' % (username, password))
-    b64_credentials = base64.b64encode(credentials.encode('ascii'))
-    headers = {
-        'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
-        'Content-Type' : 'application/json; charset=utf-8',
-    }
+#     credentials = ('%s:%s' % (username, password))
+#     b64_credentials = base64.b64encode(credentials.encode('ascii'))
+#     headers = {
+#         'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+#         'Content-Type' : 'application/json; charset=utf-8',
+#     }
 
-    payload = {
-        "loginserver_record": login_server_record,
-        "message": message,
-        "sender_created_at": timing,
-        "signature": signature_hex_str
-    }
-    json_payload = json.dumps(payload)
-    byte_payload = bytes(json_payload, ENCODING)
+#     payload = {
+#         "loginserver_record": login_server_record,
+#         "message": message,
+#         "sender_created_at": timing,
+#         "signature": signature_hex_str
+#     }
+#     json_payload = json.dumps(payload)
+#     byte_payload = bytes(json_payload, ENCODING)
 
-    try:   
-        req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
-        response = urllib.request.urlopen(req)
-    except urllib.error.HTTPError as err:
-        print("Error: " + str(err.code))
-    else:
-        data = response.read() # read the received bytes
-        encoding = response.info().get_content_charset(ENCODING) #load encoding if possible (default to utf-8)
-        response.close()
+#     try:   
+#         req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
+#         response = urllib.request.urlopen(req)
+#     except urllib.error.HTTPError as err:
+#         print("Error: " + str(err.code))
+#     else:
+#         data = response.read() # read the received bytes
+#         encoding = response.info().get_content_charset(ENCODING) #load encoding if possible (default to utf-8)
+#         response.close()
 
-        JSON_object = json.loads(data.decode(encoding))
-        print(JSON_object)
+#         JSON_object = json.loads(data.decode(encoding))
+#         print(JSON_object)
 
-def report(username,password):
+#         # received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
+#         response = JSON_object.get('response')
+#         print("Broadcast:")
+#         print(response)
 
-    # Serialize the verify key to send it to a third party
-    signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
-    verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
-    pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
-    credentials = ('%s:%s' % (username, password))
-    b64_credentials = base64.b64encode(credentials.encode('ascii'))
-    headers = {
-        'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
-        'Content-Type' : 'application/json; charset=utf-8',
-    }
-    pubkey_hex_str = pubkey_hex.decode('utf-8')
+#         # response = {
+#         # 'response : ok'
+#         # }
 
-    message_bytes = bytes(pubkey_hex_str + username, encoding='utf-8')
-    signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
+#         # response = json.dumps(response)
+#         # print(response)
 
-    signature_hex_str = signed.signature.decode('utf-8')
+# @cherrypy.expose
+# def receive_message(self):
+#     print("receiving message")
 
-    addkey_url = "http://cs302.kiwi.land/api/report"
 
-    payload = {
-        "connection_location": "2",
-        "connection_address": "172.23.153.89",
-        "incoming_pubkey": pubkey_hex_str
+# @cherrypy.expose
+# def report(username,password):
+
+#     # Serialize the verify key to send it to a third party
+#     signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+#     verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
+#     pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
+#     credentials = ('%s:%s' % (username, password))
+#     b64_credentials = base64.b64encode(credentials.encode('ascii'))
+#     headers = {
+#         'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+#         'Content-Type' : 'application/json; charset=utf-8',
+#     }
+#     pubkey_hex_str = pubkey_hex.decode('utf-8')
+
+#     message_bytes = bytes(pubkey_hex_str + username, encoding='utf-8')
+#     signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
+
+#     signature_hex_str = signed.signature.decode('utf-8')
+
+#     addkey_url = "http://cs302.kiwi.land/api/report"
+
+#     payload = {
+#         "connection_location": "2",
+#         "connection_address": "172.23.155.225",
+#         "incoming_pubkey": pubkey_hex_str
     
-    }
-    json_payload = json.dumps(payload)
-    byte_payload = bytes(json_payload, "utf-8")
+#     }
+#     json_payload = json.dumps(payload)
+#     byte_payload = bytes(json_payload, "utf-8")
 
-    try:   
-        req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
-        response = urllib.request.urlopen(req)
-    except urllib.error.HTTPError as err:
-        print("Error: " + str(err.code))
-    else:
-        data = response.read() # read the received bytes
-        encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
-        response.close()
+#     try:   
+#         req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
+#         response = urllib.request.urlopen(req)
+#     except urllib.error.HTTPError as err:
+#         print("Error: " + str(err.code))
+#     else:
+#         data = response.read() # read the received bytes
+#         encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+#         response.close()
 
-        JSON_object = json.loads(data.decode(encoding))
-        print(JSON_object)
-
-
+#         JSON_object = json.loads(data.decode(encoding))
+#         print(JSON_object)
 
 
-    
-        
 
-def authoriseUserLogin(username, password):
-    print("Log on attempt from {0}:{1}".format(username, password))
-    #ping(username,password)
-    pubhexstr = (get_privatedata(username,password))
-   # report(username,password)
-    return (ping(username,password))
+
+
     
    # if ((username.lower() == "user") and (password.lower() == "password") or (username.lower() == "mmir415") and (password.lower() == "mmir415_339816700") ):
   
