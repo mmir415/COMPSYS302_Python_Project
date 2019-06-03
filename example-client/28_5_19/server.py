@@ -23,7 +23,10 @@ class apiList(object):
     @cherrypy.expose              
     def rx_broadcast(self):
         received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
-        print ((received_data)["loginserver_record"])
+        print("Sender:")
+        sender_logins = (received_data)["loginserver_record"]
+        print (sender_logins)
+        print(sender_logins.split(","))
 
         message = received_data.get('message').encode('utf-8')
         print("Broadcast:")
