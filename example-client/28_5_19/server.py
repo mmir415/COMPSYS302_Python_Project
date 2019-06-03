@@ -8,7 +8,7 @@ import time
 import json
 #from example_client import ping
 
-startHTML = "<html><head><title>CS302 example</title><link rel='stylesheet' href='/static/example.css' /></head><body>"
+startHTML = "<html><head><title>Yacker!</title><link rel='stylesheet' href='/static/example.css' /></head><body>"
 
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 timing = str(time.time())
@@ -113,7 +113,7 @@ class MainApp(object):
     # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
     def index(self):
-        Page = startHTML + "Welcome to Yacker!<br/>"
+        Page = startHTML + "<font color ='blue'> Welcome to Yacker!</font><br/>"
         
         try:
             Page += "Hello " + cherrypy.session['username'] + "!<br/>"
@@ -159,7 +159,8 @@ class MainApp(object):
                     pass
             #MainApp.listusers(self,username,password)
             try:
-                MainApp.private_message(self,username,password)
+                print("Sup")
+                #MainApp.private_message(self,username,password)
             except:
                 print("Offline")
                 pass
@@ -206,7 +207,7 @@ class MainApp(object):
 
             payload = {
                 "connection_location": "2",
-                "connection_address": "172.23.134.246:80",
+                "connection_address": "192.168.1.15",
                 "incoming_pubkey": pubkey_hex_str
         
             }
