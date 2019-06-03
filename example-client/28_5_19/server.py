@@ -94,10 +94,12 @@ class MainApp(object):
             cherrypy.session['username'] = username
             cherrypy.session['password'] = password
             MainApp.report(self,username,password)
+
+            for x in  (MainApp.listusers(self,username,password))["users"]:
+                print(x["username"])
+            #MainApp.listusers(self,username,password)
             
-            MainApp.listusers(self,username,password)
-            
-            MainApp.broadcast(self,username,password)
+            #MainApp.broadcast(self,username,password)
             MainApp.receive_message(self)
             
             
@@ -139,7 +141,7 @@ class MainApp(object):
 
             payload = {
                 "connection_location": "2",
-                "connection_address": "172.23.155.225",
+                "connection_address": "172.23.134.246:80",
                 "incoming_pubkey": pubkey_hex_str
         
             }
@@ -230,6 +232,9 @@ class MainApp(object):
 
         JSON_object = json.loads(data.decode(encoding))
         print(json.dumps(JSON_object,indent=4))
+        return (JSON_object)
+        #for x in JSON_object["users"]:
+        #    print(x["username"])
 
 
     @cherrypy.expose    
