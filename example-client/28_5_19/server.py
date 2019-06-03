@@ -23,15 +23,23 @@ class apiList(object):
     @cherrypy.expose              
     def rx_broadcast(self):
         received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
+        print ((received_data)["loginserver_record"])
 
         message = received_data.get('message').encode('utf-8')
         print("Broadcast:")
         print(message)
+        
 
         response = {
             'response':'ok'
         }
         response = json.dumps(response)
+        #for x in  (response)["loginserver_record"]:
+        
+          #  try:
+          #      ip_address = x.get("connection_address")
+          #      print(ip_address)
+
         return (response)
 
 
@@ -99,7 +107,7 @@ class MainApp(object):
                 try:
                     ip_address = x.get("connection_address")
                     print(ip_address)
-                    MainApp.broadcast(self,username,ip_address,password)
+                    #MainApp.broadcast(self,username,ip_address,password)
                 except:
                     pass
             #MainApp.listusers(self,username,password)
