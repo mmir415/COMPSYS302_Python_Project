@@ -58,7 +58,7 @@ class MainApp(object):
     # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
     def index(self):
-        Page = startHTML + "Welcome! This is a test website for COMPSYS302!<br/>"
+        Page = startHTML + "Welcome to Yacker!<br/>"
         
         try:
             Page += "Hello " + cherrypy.session['username'] + "!<br/>"
@@ -96,10 +96,11 @@ class MainApp(object):
             MainApp.report(self,username,password)
 
             for x in  (MainApp.listusers(self,username,password))["users"]:
-                print(x["username"])
+                ip_address = x.get("connection_address")
+                print(ip_address)
             #MainApp.listusers(self,username,password)
             
-            #MainApp.broadcast(self,username,password)
+            #MainApp.broadcast(self,username,ip_address,password)
             MainApp.receive_message(self)
             
             
@@ -273,7 +274,7 @@ class MainApp(object):
                 return 1
 
     @cherrypy.expose
-    def broadcast(self,username,password):
+    def broadcast(self,username,ip_address,password):
         timing = str(time.time())
         ENCODING = 'utf-8'
 
@@ -293,7 +294,7 @@ class MainApp(object):
 
         signature_hex_str = signed.signature.decode(ENCODING)
 
-        addkey_url = "http://172.23.155.225:80/api/rx_broadcast"
+        addkey_url = "http://"+ip_address+"/api/rx_broadcast"
 
         credentials = ('%s:%s' % (username, password))
         b64_credentials = base64.b64encode(credentials.encode('ascii'))
