@@ -27,7 +27,11 @@ import time
 
 # The address we listen for connections on
 #LISTEN_IP = "172.23.155.225"
-LISTEN_IP = "172.23.134.246"
+#Below is the uni IP
+#LISTEN_IP = "172.23.134.246"
+
+#Below is the home IP
+LISTEN_IP = "192.168.1.15"
 LISTEN_PORT = 80
 
 def runMainApp():
