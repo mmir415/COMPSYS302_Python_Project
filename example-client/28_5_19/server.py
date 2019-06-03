@@ -59,9 +59,9 @@ class apiList(object):
         sender_name = login_list[0]
         print(sender_name)
 
-        message = received_data.get('encrypted_message').encode('utf-8')
+        en_message = received_data.get('encrypted_message').encode('utf-8')
         print("Private Message:")
-        print(message)
+        print(en_message)
         
 
         response = {
@@ -390,11 +390,15 @@ class MainApp(object):
             # response = json.dumps(response)
             # print(response)
     def private_message(self,username,password):
-        server_pubkey = '67e5107702196a80bff43b46c25531bc7f0cbbb44db5d24bd89077387abc73b6'
+        #DMing Tomas
+        #server_pubkey = '67e5107702196a80bff43b46c25531bc7f0cbbb44db5d24bd89077387abc73b6'
+       # target_user = "tant836"
+       # target_ip = "172.24.5.136:1234"
 
-    #target_user = "admin"
-        target_user = "tant836"
-        target_ip = "172.24.5.136:1234"
+       #DMing Myself
+        server_pubkey = "7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5"
+        target_user = "mmir415"
+        target_ip = "172.23.134.246:80"
 
         login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
         timing = str(time.time())
