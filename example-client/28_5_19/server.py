@@ -118,7 +118,7 @@ class MainApp(object):
         try:
             Page += "Hello " + cherrypy.session['username'] + "!<br/>"
             Page += "Vae victus! <a href='/signout'>Sign out</a>"
-            Page += '<form action="/broadcast" method="post" enctype="multipart/form-data">'
+            Page += '<form action="/broadcast_setup" method="post" enctype="multipart/form-data">'
             Page += 'Message: <input type="text" name="chat"/><br/>'
             #Page += 'Password: <input type="password" name="password"/>'
             Page += '<input type="submit" value="Send Broadcast"/></form>'
@@ -343,12 +343,25 @@ class MainApp(object):
                 return 1
 
     @cherrypy.expose
-    def broadcast(self,chat):
-        timing = str(time.time())
-        ENCODING = 'utf-8'
+    def broadcast_setup(self,chat):
         cherrypy.session['chat'] = chat
         username = cherrypy.session['username']
         password = cherrypy.session['password']
+        for x in  (MainApp.listusers(self,username,password))["users"]:
+            try:
+                ip_address = x.get("connection_address")
+                print(ip_address)
+                MainApp.broadcast(self,username,ip_address,password,chat)
+            except:
+                pass
+
+    @cherrypy.expose
+    def broadcast(self,username,ip_address,password,chat):
+        timing = str(time.time())
+        ENCODING = 'utf-8'
+        # cherrypy.session['chat'] = chat
+        # username = cherrypy.session['username']
+        # password = cherrypy.session['password']
 
         login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
         signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
@@ -366,8 +379,8 @@ class MainApp(object):
 
         signature_hex_str = signed.signature.decode(ENCODING)
 
-        #addkey_url = "http://"+ip_address+"/api/rx_broadcast"
-        addkey_url = "http://cs302.kiwi.land/api/rx_broadcast"
+        addkey_url = "http://"+ip_address+"/api/rx_broadcast"
+        #addkey_url = "http://cs302.kiwi.land/api/rx_broadcast"
 
         credentials = ('%s:%s' % (username, password))
         b64_credentials = base64.b64encode(credentials.encode('ascii'))
