@@ -26,7 +26,10 @@ class apiList(object):
         print("Sender:")
         sender_logins = (received_data)["loginserver_record"]
         print (sender_logins)
-        print(sender_logins.split(","))
+        login_list = (sender_logins.split(","))
+        print(login_list)
+        sender_name = login_list[0]
+        print(sender_name)
 
         message = received_data.get('message').encode('utf-8')
         print("Broadcast:")
