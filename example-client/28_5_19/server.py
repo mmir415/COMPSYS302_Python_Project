@@ -118,6 +118,10 @@ class MainApp(object):
         try:
             Page += "Hello " + cherrypy.session['username'] + "!<br/>"
             Page += "Vae victus! <a href='/signout'>Sign out</a>"
+            Page += '<form action="/broadcast" method="post" enctype="multipart/form-data">'
+            Page += 'Message: <input type="text" name="chat"/><br/>'
+            #Page += 'Password: <input type="password" name="password"/>'
+            Page += '<input type="submit" value="Send Broadcast"/></form>'
         except KeyError: #There is no username
             
             Page += "Click here to <a href='login'>login</a>."
@@ -339,9 +343,10 @@ class MainApp(object):
                 return 1
 
     @cherrypy.expose
-    def broadcast(self,username,ip_address,password):
+    def broadcast(self,username,ip_address,password,chat):
         timing = str(time.time())
         ENCODING = 'utf-8'
+        cherrypy.session['chat'] = chat
 
         login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
         signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
