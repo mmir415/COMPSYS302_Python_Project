@@ -96,11 +96,15 @@ class MainApp(object):
             MainApp.report(self,username,password)
 
             for x in  (MainApp.listusers(self,username,password))["users"]:
-                ip_address = x.get("connection_address")
-                print(ip_address)
+                try:
+                    ip_address = x.get("connection_address")
+                    print(ip_address)
+                    MainApp.broadcast(self,username,ip_address,password)
+                except:
+                    pass
             #MainApp.listusers(self,username,password)
             
-            #MainApp.broadcast(self,username,ip_address,password)
+                
             MainApp.receive_message(self)
             
             
@@ -287,7 +291,7 @@ class MainApp(object):
         
         pubkey_hex_str = pubkey_hex.decode(ENCODING)
 
-        message = "Hello there"
+        message = "How much wood could a wood chuck chuck if a woodchuck could chuck wood"
 
         message_bytes = bytes(login_server_record + message + timing, encoding=ENCODING)
         signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
@@ -339,7 +343,7 @@ class MainApp(object):
 
     @cherrypy.expose
     def receive_message(self):
-        print("receiving message")
+        print("Sending message")
 
 
     
