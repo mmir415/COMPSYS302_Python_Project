@@ -57,12 +57,23 @@ class apiList(object):
         login_list = (sender_logins.split(","))
         print(login_list)
         sender_name = login_list[0]
+        sender_pubkey = login_list[1]
         print(sender_name)
 
         en_message = received_data.get('encrypted_message').encode('utf-8')
+
+        signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+        #verifykey = nacl.signing.VerifyKey(sender_pubkey, encoder=nacl.encoding.HexEncoder)
+        publickey = (signing_key.to_curve25519_private_key())
+
+        sealed_box = (nacl.public.SealedBox(publickey))
+        decrypted = (sealed_box.decrypt(en_message, encoder=nacl.encoding.HexEncoder))
+        de_message = (decrypted.decode('utf-8'))
+        #de_message = bytes(de_message,'utf-8')
+
         print("Private Message:")
         print(en_message)
-        
+        print(de_message)
 
         response = {
             'response':'ok'
@@ -340,7 +351,7 @@ class MainApp(object):
         
         pubkey_hex_str = pubkey_hex.decode(ENCODING)
 
-        message = "How much wood could a wood chuck chuck if a woodchuck could chuck wood"
+        message = "Golden State won"
 
         message_bytes = bytes(login_server_record + message + timing, encoding=ENCODING)
         signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
