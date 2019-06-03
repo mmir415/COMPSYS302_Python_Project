@@ -343,10 +343,12 @@ class MainApp(object):
                 return 1
 
     @cherrypy.expose
-    def broadcast(self,username,ip_address,password,chat):
+    def broadcast(self,chat):
         timing = str(time.time())
         ENCODING = 'utf-8'
         cherrypy.session['chat'] = chat
+        username = cherrypy.session['username']
+        password = cherrypy.session['password']
 
         login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
         signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
@@ -357,14 +359,15 @@ class MainApp(object):
         
         pubkey_hex_str = pubkey_hex.decode(ENCODING)
 
-        message = "Golden State won"
+        message = chat
 
         message_bytes = bytes(login_server_record + message + timing, encoding=ENCODING)
         signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
 
         signature_hex_str = signed.signature.decode(ENCODING)
 
-        addkey_url = "http://"+ip_address+"/api/rx_broadcast"
+        #addkey_url = "http://"+ip_address+"/api/rx_broadcast"
+        addkey_url = "http://cs302.kiwi.land/api/rx_broadcast"
 
         credentials = ('%s:%s' % (username, password))
         b64_credentials = base64.b64encode(credentials.encode('ascii'))
