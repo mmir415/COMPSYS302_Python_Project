@@ -211,7 +211,7 @@ class MainApp(object):
 
             payload = {
                 "connection_location": "2",
-                "connection_address": "192.168.1.15",
+                "connection_address": "172.23.134.246",
                 "incoming_pubkey": pubkey_hex_str
         
             }
@@ -306,6 +306,56 @@ class MainApp(object):
         #for x in JSON_object["users"]:
         #    print(x["username"])
 
+    @cherrypy.expose
+    def ping_check(username,password):
+        # Serialize the verify key to send it to a third party
+        signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+        verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
+        pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
+    
+        pubkey_hex_str = pubkey_hex.decode('utf-8')
+   
+        message_bytes = bytes(pubkey_hex_str, encoding='utf-8')
+        signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
+
+        signature_hex_str = signed.signature.decode('utf-8')
+
+        addkey_url = "http://cs302.kiwi.land/api/ping"
+
+        #create HTTP BASIC authorization header
+        credentials = ('%s:%s' % (username, password))
+        b64_credentials = base64.b64encode(credentials.encode('ascii'))
+        headers = {
+            'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+            'Content-Type' : 'application/json; charset=utf-8',
+        }
+
+        payload = {
+            "pubkey": pubkey_hex_str,
+            #"username": username,
+            "signature": signature_hex_str,
+        }
+        json_payload = json.dumps(payload)
+        byte_payload = bytes(json_payload, "utf-8")
+
+        try:   
+            req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
+            response = urllib.request.urlopen(req)
+        except urllib.error.HTTPError as err:
+            print("Error: " + str(err.code))
+        else:
+            data = response.read() # read the received bytes
+            encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+            response.close()
+
+            JSON_object = json.loads(data.decode(encoding))
+            if (JSON_object["authentication"] == "error"):
+                return 1
+            else:
+                print(json.dumps(JSON_object,indent=4))
+                return 0
+
+
 
     @cherrypy.expose    
     def get_privatedata(self,username,password):
@@ -344,16 +394,25 @@ class MainApp(object):
 
     @cherrypy.expose
     def broadcast_setup(self,chat):
+        Page = startHTML
         cherrypy.session['chat'] = chat
         username = cherrypy.session['username']
         password = cherrypy.session['password']
-        for x in  (MainApp.listusers(self,username,password))["users"]:
-            try:
-                ip_address = x.get("connection_address")
-                print(ip_address)
-                MainApp.broadcast(self,username,ip_address,password,chat)
-            except:
+       # for x in  (MainApp.listusers(self,username,password))["users"]:
+        try:
+            #ip_address = x.get("connection_address")
+            ip_address = "172.23.94.203:1234"
+            print(ip_address)
+            MainApp.broadcast(self,username,ip_address,password,chat)
+
+        except:
                 pass
+        
+        Page += "Successfully broadcasted, " + cherrypy.session['username'] + "!<br/>"
+        raise cherrypy.HTTPRedirect('/signout')
+        #Page += "Vae victus! <a href='/signout'>Sign out</a>"
+     
+        
 
     @cherrypy.expose
     def broadcast(self,username,ip_address,password,chat):
@@ -380,7 +439,7 @@ class MainApp(object):
         signature_hex_str = signed.signature.decode(ENCODING)
 
         addkey_url = "http://"+ip_address+"/api/rx_broadcast"
-        #addkey_url = "http://cs302.kiwi.land/api/rx_broadcast"
+        #addkey_url = "http://172.23.75.25/api/rx_broadcast"
 
         credentials = ('%s:%s' % (username, password))
         b64_credentials = base64.b64encode(credentials.encode('ascii'))
