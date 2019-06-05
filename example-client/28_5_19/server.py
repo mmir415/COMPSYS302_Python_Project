@@ -180,6 +180,7 @@ class MainApp(object):
             # c.execute("""UPDATE Users
             #  SET privatekey = '00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
             #    WHERE username = 'mmir415'""")
+            current_user = username
             
             for x in  (MainApp.listusers(self,username,password))["users"]:
                 #Now we do databases
@@ -189,6 +190,11 @@ class MainApp(object):
                 VALUES(?,?,?,?,?,?)''',userlist)
                 except sqlite3.IntegrityError:
                     pass
+
+                private_key = nacl.signing.SigningKey.generate() #Private key
+                c.execute("""UPDATE Users SET
+                 privatekey =? 
+                 WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
                 
 
                 try:
