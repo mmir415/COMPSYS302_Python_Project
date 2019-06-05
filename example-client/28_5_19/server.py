@@ -49,8 +49,11 @@ class apiList(object):
         sender_logins = (received_data)["connection_address"]
         print (sender_logins)       
 
+        username = cherrypy.session['username']
         response = {
-            'response':'ok'
+            'response':'ok',
+            'my_time' : timing,
+            'my_active_usernames': username
         }
         response = json.dumps(response)
         return (response)
