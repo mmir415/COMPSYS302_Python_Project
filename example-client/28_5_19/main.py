@@ -24,14 +24,19 @@ import nacl.encoding
 import nacl.signing
 import nacl.utils
 import time
+import socket
 
+host_name = socket.gethostname()
+print(host_name, type(host_name))
+ip = socket.gethostbyname(host_name)
 # The address we listen for connections on
 #LISTEN_IP = "172.23.155.225"
 #Below is the uni IP
 #LISTEN_IP = "172.23.134.246"
 
 #Below is the home IP
-LISTEN_IP = "192.168.1.15"
+#LISTEN_IP = "192.168.1.15"
+LISTEN_IP = ip
 LISTEN_PORT = 80
 
 def runMainApp():
