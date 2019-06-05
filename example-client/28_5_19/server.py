@@ -6,12 +6,22 @@ import nacl.utils
 import base64
 import time
 import json
+import sqlite3
+import socket
 #from example_client import ping
 
 startHTML = "<html><head><title>Yacker!</title><link rel='stylesheet' href='/static/example.css' /></head><body>"
-
+host_name = socket.gethostname()
+print(host_name, type(host_name))
+ip = socket.gethostbyname(host_name)
+ip = ip + ":" + "80"
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 timing = str(time.time())
+# conn1 = sqlite3.connect("Users.db")
+# c = conn1.cursor()
+# #Now we do databases
+# conn1.commit()
+# conn1.close()
 
 class apiList(object):
     
@@ -222,7 +232,7 @@ class MainApp(object):
 
             payload = {
                 "connection_location": "2",
-                "connection_address":"172.23.134.246",
+                "connection_address":ip,
                 "incoming_pubkey": pubkey_hex_str
         
             }
