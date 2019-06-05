@@ -47,16 +47,7 @@ class apiList(object):
         received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
         print("Sender:")
         sender_logins = (received_data)["connection_address"]
-        print (sender_logins)
-        #login_list = (sender_logins.split(","))
-        #print(login_list)
-        #sender_name = login_list[0]
-        #print(sender_name)
-
-        #message = received_data.get('message').encode('utf-8')
-        #print("Broadcast:")
-        #print(message)
-        
+        print (sender_logins)       
 
         response = {
             'response':'ok'
@@ -167,7 +158,7 @@ class MainApp(object):
     def signin(self, username=None, password=None):
         """Check their name and password and send them either to the main page, or back to the main login screen."""
         error = MainApp.ping(self,username, password)
-        # checked = MainApp.ping_check(self,username,password)
+        
         if (error == 0):
         # & (checked == 0)):
             cherrypy.session['username'] = username
@@ -178,7 +169,7 @@ class MainApp(object):
                 try:
                     ip_address = x.get("connection_address")
                     print(ip_address)
-                    #MainApp.broadcast(self,username,ip_address,password)
+                    MainApp.ping_check(self,username,password,ip_address)
                 except:
                     pass
             #MainApp.listusers(self,username,password)
@@ -300,6 +291,7 @@ class MainApp(object):
             else:
                 print(json.dumps(JSON_object,indent=4))
                 return 0
+
     @cherrypy.expose
     def listusers(self,username,password):
         
@@ -327,7 +319,7 @@ class MainApp(object):
         #    print(x["username"])
 
     @cherrypy.expose
-    def ping_check(self,username,password):
+    def ping_check(self,username,password,ip_address):
         # Serialize the verify key to send it to a third party
         signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
         verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
@@ -340,7 +332,7 @@ class MainApp(object):
 
         signature_hex_str = signed.signature.decode('utf-8')
 
-        addkey_url = "http://172.23.136.119:80/api/ping_check"
+        addkey_url = "http://"+ip_address+"/api/ping_check"
 
         active_users = []
         all_active_users = "none"
@@ -380,7 +372,7 @@ class MainApp(object):
 
             JSON_object = json.loads(data.decode(encoding))
             print(json.dumps(JSON_object,indent=4))
-            return 0
+            
 
 
     @cherrypy.expose    
@@ -424,15 +416,15 @@ class MainApp(object):
         cherrypy.session['chat'] = chat
         username = cherrypy.session['username']
         password = cherrypy.session['password']
-       # for x in  (MainApp.listusers(self,username,password))["users"]:
-        try:
-            #ip_address = x.get("connection_address")
+        for x in  (MainApp.listusers(self,username,password))["users"]:
+            try:
+                ip_address = x.get("connection_address")
             #ip_address = "172.23.94.203:1234"
-            ip_address = "127.0.0.1:2243"
-            print(ip_address)
-            MainApp.broadcast(self,username,ip_address,password,chat)
+            #ip_address = "127.0.0.1:2243"
+                print(ip_address)
+                MainApp.broadcast(self,username,ip_address,password,chat)
 
-        except:
+            except:
                 pass
         
         Page += "Successfully broadcasted, " + cherrypy.session['username'] + "!<br/>"
