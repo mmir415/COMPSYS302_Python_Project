@@ -175,6 +175,12 @@ class MainApp(object):
            
             conn1 = sqlite3.connect("Users.db")
             c = conn1.cursor()
+            my_Key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
+
+            c.execute("""UPDATE Users
+             SET privatekey = '00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
+               WHERE username = 'mmir415'""")
+            
             for x in  (MainApp.listusers(self,username,password))["users"]:
                 #Now we do databases
                 userlist = [x["connection_location"],x["connection_updated_at"],x[ "incoming_pubkey"],x[ "username"],x[ "connection_address"],x["status"]]
