@@ -17,6 +17,8 @@ h3 {
 }
 
 div.w3-container.w3-red {
-    background-color:#3399ff;
+    background-color:#ebff33;
+    height : 200px;
+    width : 15%;
 
 }

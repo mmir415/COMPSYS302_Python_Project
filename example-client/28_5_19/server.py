@@ -13,9 +13,9 @@ import socket
 startHTML = "<html><head><title>Yacker!</title><link rel='stylesheet' href='/static/example.css' /></head><body>"
 host_name = socket.gethostname()
 print(host_name, type(host_name))
-#ip = socket.gethostbyname(host_name)
-ip = "172.23.134.246"
-ip = ip + ":" + "81"
+ip = socket.gethostbyname(host_name)
+#ip = "172.23.134.246"
+ip = ip + ":" + "82"
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 timing = str(time.time())
 
@@ -38,7 +38,7 @@ class apiList(object):
         sender_name = login_list[0]
         print(sender_name)
 
-        message = received_data.get('message').encode('utf-8')
+        message = received_data.get('message')
         print("Broadcast:")
         print(message)
         
@@ -129,7 +129,7 @@ class MainApp(object):
     # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
     def index(self):
-        Page = startHTML + "<h3 align = center><font color ='blue'> Welcome to Yacker!</font></h1><br/>"
+        Page = startHTML + "<h1 align = center><font color ='blue'> Welcome to Yacker!</font></h1><br/>"
         
         try:
             Page += "Hello " + cherrypy.session['username'] + "!<br/>"
@@ -175,11 +175,11 @@ class MainApp(object):
            
             conn1 = sqlite3.connect("Users.db")
             c = conn1.cursor()
-            my_Key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
+            # my_Key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 
-            c.execute("""UPDATE Users
-             SET privatekey = '00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
-               WHERE username = 'mmir415'""")
+            # c.execute("""UPDATE Users
+            #  SET privatekey = '00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
+            #    WHERE username = 'mmir415'""")
             
             for x in  (MainApp.listusers(self,username,password))["users"]:
                 #Now we do databases
