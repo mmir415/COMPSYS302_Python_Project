@@ -40,13 +40,31 @@ class apiList(object):
             'response':'ok'
         }
         response = json.dumps(response)
-        #for x in  (response)["loginserver_record"]:
-        
-          #  try:
-          #      ip_address = x.get("connection_address")
-          #      print(ip_address)
-
         return (response)
+
+    @cherrypy.expose
+    def ping_check(self):
+        received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
+        print("Sender:")
+        sender_logins = (received_data)["connection_address"]
+        print (sender_logins)
+        #login_list = (sender_logins.split(","))
+        #print(login_list)
+        #sender_name = login_list[0]
+        #print(sender_name)
+
+        #message = received_data.get('message').encode('utf-8')
+        #print("Broadcast:")
+        #print(message)
+        
+
+        response = {
+            'response':'ok'
+        }
+        response = json.dumps(response)
+        return (response)
+
+
 
     @cherrypy.expose              
     def rx_privatemessage(self):
@@ -113,7 +131,7 @@ class MainApp(object):
     # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
     def index(self):
-        Page = startHTML + "<font color ='blue'> Welcome to Yacker!</font><br/>"
+        Page = startHTML + "<h3 align = center><font color ='blue'> Welcome to Yacker!</font></h1><br/>"
         
         try:
             Page += "Hello " + cherrypy.session['username'] + "!<br/>"
@@ -124,7 +142,7 @@ class MainApp(object):
             Page += '<input type="submit" value="Send Broadcast"/></form>'
         except KeyError: #There is no username
             
-            Page += "Click here to <a href='login'>login</a>."
+            Page += '<div class = "w3-container w3-red"><p align = center>Click here to <a href ="login">login</a></p></div>.'
         return Page
         
     @cherrypy.expose
@@ -149,7 +167,9 @@ class MainApp(object):
     def signin(self, username=None, password=None):
         """Check their name and password and send them either to the main page, or back to the main login screen."""
         error = MainApp.ping(self,username, password)
-        if error == 0:
+        # checked = MainApp.ping_check(self,username,password)
+        if (error == 0):
+        # & (checked == 0)):
             cherrypy.session['username'] = username
             cherrypy.session['password'] = password
             MainApp.report(self,username,password)
@@ -211,7 +231,7 @@ class MainApp(object):
 
             payload = {
                 "connection_location": "2",
-                "connection_address": "172.23.134.246",
+                "connection_address":"172.23.134.246",
                 "incoming_pubkey": pubkey_hex_str
         
             }
@@ -307,7 +327,7 @@ class MainApp(object):
         #    print(x["username"])
 
     @cherrypy.expose
-    def ping_check(username,password):
+    def ping_check(self,username,password):
         # Serialize the verify key to send it to a third party
         signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
         verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
@@ -320,7 +340,16 @@ class MainApp(object):
 
         signature_hex_str = signed.signature.decode('utf-8')
 
-        addkey_url = "http://cs302.kiwi.land/api/ping"
+        addkey_url = "http://172.23.136.119:80/api/ping_check"
+
+        active_users = []
+        all_active_users = "none"
+       # try:
+       #     all_active = MainApp.listusers(username,password)
+       #     for y in all_active["users"]:
+       #         active_users.append(y["username"])
+
+       #     print(active_users)
 
         #create HTTP BASIC authorization header
         credentials = ('%s:%s' % (username, password))
@@ -331,9 +360,10 @@ class MainApp(object):
         }
 
         payload = {
-            "pubkey": pubkey_hex_str,
-            #"username": username,
-            "signature": signature_hex_str,
+            "my_time":timing,
+           # "my_active_usernames"
+            "connection_address":"172.23.134.246",
+            "connection_location": "1",
         }
         json_payload = json.dumps(payload)
         byte_payload = bytes(json_payload, "utf-8")
@@ -349,12 +379,8 @@ class MainApp(object):
             response.close()
 
             JSON_object = json.loads(data.decode(encoding))
-            if (JSON_object["authentication"] == "error"):
-                return 1
-            else:
-                print(json.dumps(JSON_object,indent=4))
-                return 0
-
+            print(json.dumps(JSON_object,indent=4))
+            return 0
 
 
     @cherrypy.expose    
@@ -401,7 +427,8 @@ class MainApp(object):
        # for x in  (MainApp.listusers(self,username,password))["users"]:
         try:
             #ip_address = x.get("connection_address")
-            ip_address = "172.23.94.203:1234"
+            #ip_address = "172.23.94.203:1234"
+            ip_address = "127.0.0.1:2243"
             print(ip_address)
             MainApp.broadcast(self,username,ip_address,password,chat)
 
