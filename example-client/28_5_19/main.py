@@ -37,7 +37,7 @@ ip = socket.gethostbyname(host_name)
 #Below is the home IP
 #LISTEN_IP = "172.23.134.246"
 LISTEN_IP = ip
-LISTEN_PORT = 82
+LISTEN_PORT = 86
 
 def runMainApp():
     #set up the config

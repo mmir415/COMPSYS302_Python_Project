@@ -10,12 +10,12 @@ import sqlite3
 import socket
 #from example_client import ping
 
-startHTML = "<html><head><title>Yacker!</title><link rel='stylesheet' href='/static/example.css' /></head><body>"
+startHTML = "<html><head><title>Yakker!</title><link rel='stylesheet' href='/static/example.css' /></head><body>"
 host_name = socket.gethostname()
 print(host_name, type(host_name))
 ip = socket.gethostbyname(host_name)
 #ip = "172.23.134.246"
-ip = ip + ":" + "82"
+ip = ip + ":" + "86"
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 timing = str(time.time())
 
@@ -129,7 +129,7 @@ class MainApp(object):
     # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
     def index(self):
-        Page = startHTML + "<h1 align = center><font color ='blue'> Welcome to Yacker!</font></h1><br/>"
+        Page = startHTML + "<h1 align = center><font color ='blue'> Welcome to Yakker!</font></h1><br/>"
         
         try:
             Page += "Hello " + cherrypy.session['username'] + "!<br/>"
@@ -139,8 +139,8 @@ class MainApp(object):
             #Page += 'Password: <input type="password" name="password"/>'
             Page += '<input type="submit" value="Send Broadcast"/></form>'
         except KeyError: #There is no username
-            
-            Page += '<div class = "w3-container w3-red"><p align = center>Click here to <a href ="login">login</a></p></div>.'
+            Page += '<img itemprop="contentURL" src="http://www.uidownload.com/files/765/758/365/speech-bubble-icon-free-vector.jpg" alt="Speech Bubble Icon Free Vector screenshot" width="160" height="200" class="center"><br/>'
+            Page += '<div class = "w3-container w3-red"><p align = center><font color ="white">Click here to <a href ="login">login</a></font></p></div>.'
         return Page
         
     @cherrypy.expose
