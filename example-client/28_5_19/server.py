@@ -475,16 +475,29 @@ class MainApp(object):
         cherrypy.session['chat'] = chat
         username = cherrypy.session['username']
         password = cherrypy.session['password']
+        active_user = username
+        hex_private_key = 0
+        conn2 = sqlite3.connect("Users.db")
+        c = conn2.cursor()
+        c.execute("""SELECT privatekey FROM Users WHERE username =?""",(active_user,))
+        for row in c.fetchall():
+            hex_private_key = (row[0])
+            conn2.commit()
+            conn2.close() 
+        hex_private_key = bytes(hex_private_key,'utf-8')
+        print("YO")
+        print(hex_private_key)
         for x in  (MainApp.listusers(self,username,password))["users"]:
             try:
                 ip_address = x.get("connection_address")
             #ip_address = "172.23.94.203:1234"
             #ip_address = "127.0.0.1:2243"
                 print(ip_address)
-                MainApp.broadcast(self,username,ip_address,password,chat)
+                MainApp.broadcast(self,username,ip_address,password,chat,hex_private_key)
 
             except:
                 pass
+           
         
         Page += "Successfully broadcasted, " + cherrypy.session['username'] + "!<br/>"
         raise cherrypy.HTTPRedirect('/signout')
@@ -493,7 +506,7 @@ class MainApp(object):
         
 
     @cherrypy.expose
-    def broadcast(self,username,ip_address,password,chat):
+    def broadcast(self,username,ip_address,password,chat,hex_private_key):
         timing = str(time.time())
         ENCODING = 'utf-8'
         # cherrypy.session['chat'] = chat
@@ -501,7 +514,7 @@ class MainApp(object):
         # password = cherrypy.session['password']
 
         login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
-        signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+        signing_key = nacl.signing.SigningKey(hex_private_key, encoder=nacl.encoding.HexEncoder)
 
         # Serialize the verify key to send it to a third party
     #verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
