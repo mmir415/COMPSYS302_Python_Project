@@ -185,7 +185,7 @@ class MainApp(object):
         # & (checked == 0)):
             cherrypy.session['username'] = username
             cherrypy.session['password'] = password
-            MainApp.report(self,username,password)
+            MainApp.report(self,username,password,hex_priv_key)
             #MainApp.private_message(self,username,password)
 
            
@@ -255,10 +255,10 @@ class MainApp(object):
             cherrypy.lib.sessions.expire()
         raise cherrypy.HTTPRedirect('/')
     @cherrypy.expose
-    def report(self,username,password):
+    def report(self,username,password,hex_priv_key):
 
     # Serialize the verify key to send it to a third party
-            signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+            signing_key = nacl.signing.SigningKey(hex_priv_key, encoder=nacl.encoding.HexEncoder)
             verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
             pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
             credentials = ('%s:%s' % (username, password))
