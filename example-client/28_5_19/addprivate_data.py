@@ -12,8 +12,7 @@ import nacl.pwhash.argon2i
 username = "mmir415"
 password = "mmir415_339816700"
 pri_key = '00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
-server_pubkey = '11c8c33b6052ad73a7a29e832e97e31f416dedb7c6731a6f456f83a344488ec0'
-target_user = "admin"
+
 
 credentials = ('%s:%s' % (username, password))
 b64_credentials = base64.b64encode(credentials.encode('ascii'))
