@@ -217,7 +217,7 @@ class MainApp(object):
                     
                     ip_address = x.get("connection_address")
                     print(ip_address)
-                    MainApp.ping_check(self,username,password,ip_address)
+                    MainApp.ping_check(self,username,password,ip_address,hex_priv_key)
                 except:
                     pass
                 # c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
@@ -378,9 +378,9 @@ class MainApp(object):
         #    print(x["username"])
 
     @cherrypy.expose
-    def ping_check(self,username,password,ip_address):
+    def ping_check(self,username,password,ip_address,hex_priv_key):
         # Serialize the verify key to send it to a third party
-        signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+        signing_key = nacl.signing.SigningKey(hex_priv_key, encoder=nacl.encoding.HexEncoder)
         verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
         pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
     
