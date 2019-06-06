@@ -204,6 +204,10 @@ class MainApp(object):
                     MainApp.ping_check(self,username,password,ip_address)
                 except:
                     pass
+                c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
+                for row in c.fetchall():
+                    print (row[0])
+                    
             #MainApp.listusers(self,username,password)
             conn1.commit()
             conn1.close() 
