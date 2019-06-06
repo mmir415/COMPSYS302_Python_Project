@@ -13,8 +13,8 @@ import socket
 startHTML = "<html><head><title>Yakker!</title><link rel='stylesheet' href='/static/example.css' /></head><body>"
 host_name = socket.gethostname()
 print(host_name, type(host_name))
-ip = socket.gethostbyname(host_name)
-#ip = "172.23.134.246"
+#ip = socket.gethostbyname(host_name)
+ip = "172.23.134.246"
 ip = ip + ":" + "86"
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 timing = str(time.time())
@@ -67,6 +67,8 @@ class apiList(object):
     @cherrypy.expose              
     def rx_privatemessage(self):
         received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
+
+        #Everything between here and en_message is to display who it is, and needs clean up
         print("Private Sender:")
         sender_logins = (received_data)["loginserver_record"]
         print (sender_logins)
@@ -181,6 +183,7 @@ class MainApp(object):
             #  SET privatekey = '00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
             #    WHERE username = 'mmir415'""")
             current_user = username
+            hex_priv_key = 0
             
             for x in  (MainApp.listusers(self,username,password))["users"]:
                 #Now we do databases
@@ -206,7 +209,9 @@ class MainApp(object):
                     pass
                 c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
                 for row in c.fetchall():
-                    print (row[0])
+                    hex_priv_key = (row[0])
+
+                print(hex_priv_key)
                     
             #MainApp.listusers(self,username,password)
             conn1.commit()

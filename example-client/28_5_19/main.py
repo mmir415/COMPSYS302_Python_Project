@@ -28,7 +28,8 @@ import socket
 
 host_name = socket.gethostname()
 print(host_name, type(host_name))
-ip = socket.gethostbyname(host_name)
+#ip = socket.gethostbyname(host_name)
+ip = "172.23.134.246"
 # The address we listen for connections on
 #LISTEN_IP = "172.23.155.225"
 #Below is the uni IP
