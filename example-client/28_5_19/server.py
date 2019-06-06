@@ -14,7 +14,8 @@ startHTML = "<html><head><title>Yakker!</title><link rel='stylesheet' href='/sta
 host_name = socket.gethostname()
 print(host_name, type(host_name))
 #ip = socket.gethostbyname(host_name)
-ip = "172.23.134.246"
+ip = "192.168.1.15"
+#ip = "172.23.134.246"
 ip = ip + ":" + "86"
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 timing = str(time.time())
@@ -185,7 +186,7 @@ class MainApp(object):
             cherrypy.session['username'] = username
             cherrypy.session['password'] = password
             MainApp.report(self,username,password)
-            MainApp.private_message(self,username,password)
+            #MainApp.private_message(self,username,password)
 
            
             
@@ -301,7 +302,7 @@ class MainApp(object):
     def ping(self,username,password,hex_priv_key):
 
      # Serialize the verify key to send it to a third party
-        signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+        signing_key = nacl.signing.SigningKey(hex_priv_key, encoder=nacl.encoding.HexEncoder)
         verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
         pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
     
