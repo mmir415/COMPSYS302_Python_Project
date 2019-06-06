@@ -38,7 +38,7 @@ class apiList(object):
         sender_name = login_list[0]
         print(sender_name)
 
-        message = received_data.get('message')
+        message = received_data.get('message').encode('utf-8')
         print("Broadcast:")
         print(message)
         
@@ -165,25 +165,37 @@ class MainApp(object):
     # LOGGING IN AND OUT
     @cherrypy.expose
     def signin(self, username=None, password=None):
+        conn1 = sqlite3.connect("Users.db")
+        c = conn1.cursor()
+        current_user = username
+        hex_priv_key = 0
+        private_key = nacl.signing.SigningKey.generate() #Private key
+        c.execute("""UPDATE Users SET
+                 privatekey =? 
+                 WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
         """Check their name and password and send them either to the main page, or back to the main login screen."""
-        error = MainApp.ping(self,username, password)
+        c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
+        for row in c.fetchall():
+            hex_priv_key = (row[0])
+        hex_priv_key = bytes(hex_priv_key,'utf-8')
+        error = MainApp.ping(self,username, password,hex_priv_key)
         
         if (error == 0):
         # & (checked == 0)):
             cherrypy.session['username'] = username
             cherrypy.session['password'] = password
             MainApp.report(self,username,password)
+            MainApp.private_message(self,username,password)
 
            
-            conn1 = sqlite3.connect("Users.db")
-            c = conn1.cursor()
+            
             # my_Key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 
             # c.execute("""UPDATE Users
             #  SET privatekey = '00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
             #    WHERE username = 'mmir415'""")
-            current_user = username
-            hex_priv_key = 0
+            # current_user = username
+            # hex_priv_key = 0
             
             for x in  (MainApp.listusers(self,username,password))["users"]:
                 #Now we do databases
@@ -194,10 +206,10 @@ class MainApp(object):
                 except sqlite3.IntegrityError:
                     pass
 
-                private_key = nacl.signing.SigningKey.generate() #Private key
-                c.execute("""UPDATE Users SET
-                 privatekey =? 
-                 WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
+                # private_key = nacl.signing.SigningKey.generate() #Private key
+                # c.execute("""UPDATE Users SET
+                #  privatekey =? 
+                #  WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
                 
 
                 try:
@@ -207,9 +219,9 @@ class MainApp(object):
                     MainApp.ping_check(self,username,password,ip_address)
                 except:
                     pass
-                c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
-                for row in c.fetchall():
-                    hex_priv_key = (row[0])
+                # c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
+                # for row in c.fetchall():
+                #     hex_priv_key = (row[0])
 
                 print(hex_priv_key)
                     
@@ -286,7 +298,7 @@ class MainApp(object):
                 print(JSON_object)
 
     @cherrypy.expose
-    def ping(self,username,password):
+    def ping(self,username,password,hex_priv_key):
 
      # Serialize the verify key to send it to a third party
         signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
@@ -504,6 +516,7 @@ class MainApp(object):
         signature_hex_str = signed.signature.decode(ENCODING)
 
         addkey_url = "http://"+ip_address+"/api/rx_broadcast"
+        #addkey_url = "http://172.23.74.180:124/api/rx_broadcast"
         #addkey_url = "http://172.23.75.25/api/rx_broadcast"
 
         credentials = ('%s:%s' % (username, password))
@@ -553,9 +566,11 @@ class MainApp(object):
        # target_ip = "172.24.5.136:1234"
 
        #DMing Myself
-        server_pubkey = "7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5"
-        target_user = "mmir415"
-        target_ip = "172.23.134.246:80"
+        server_pubkey = "ecc575ea1916c57d5f11a1135d4d03f514d893d3889f53bfad7634cc24877a66"
+        #target_user = "admin"
+        target_user = "keva419"
+        target_ip = "172.23.74.180:1234"
+#target_user = "tden328"
 
         login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
         timing = str(time.time())
