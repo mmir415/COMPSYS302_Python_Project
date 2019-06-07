@@ -14,15 +14,17 @@ startHTML = "<html><head><title>Yakker!</title><link rel='stylesheet' href='/sta
 host_name = socket.gethostname()
 print(host_name, type(host_name))
 #ip = socket.gethostbyname(host_name)
-ip = "192.168.1.15"
-#ip = "172.23.134.246"
+#ip = "192.168.1.15"
+ip = "172.23.134.246"
 ip = ip + ":" + "86"
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 timing = str(time.time())
 
 
+
+
 class apiList(object):
-    
+    username = None
 	#CherryPy Configuration
     _cp_config = {'tools.encode.on': True, 
                   'tools.encode.encoding': 'utf-8',
@@ -80,8 +82,25 @@ class apiList(object):
         print(sender_name)
 
         en_message = received_data.get('encrypted_message').encode('utf-8')
+        current_user = str(apiList.username)
+        print(current_user)
 
-        signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+        # current_user = cherrypy.session['username']
+        conn4 = sqlite3.connect("Users.db")
+        c = conn4.cursor()
+        
+
+        priv_hex_key = 0
+        c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
+        for row in c.fetchall():
+            priv_hex_key = (row[0])
+            priv_hex_key = bytes(priv_hex_key,'utf-8')
+
+        conn4.commit()
+        conn4.close()
+        
+        
+        signing_key = nacl.signing.SigningKey(priv_hex_key, encoder=nacl.encoding.HexEncoder)
         #verifykey = nacl.signing.VerifyKey(sender_pubkey, encoder=nacl.encoding.HexEncoder)
         publickey = (signing_key.to_curve25519_private_key())
 
@@ -185,8 +204,9 @@ class MainApp(object):
         # & (checked == 0)):
             cherrypy.session['username'] = username
             cherrypy.session['password'] = password
+            apiList.username = username
             MainApp.report(self,username,password,hex_priv_key)
-            #MainApp.private_message(self,username,password)
+            MainApp.private_message(self,username,password,hex_priv_key)
 
            
             
@@ -573,7 +593,7 @@ class MainApp(object):
 
             # response = json.dumps(response)
             # print(response)
-    def private_message(self,username,password):
+    def private_message(self,username,password,hex_priv_key):
         #DMing Tomas
         #server_pubkey = '67e5107702196a80bff43b46c25531bc7f0cbbb44db5d24bd89077387abc73b6'
        # target_user = "tant836"
@@ -590,8 +610,23 @@ class MainApp(object):
         timing = str(time.time())
         ENCODING = 'utf-8'
 
+        # conn3 = sqlite3.connect("Users.db")
+        # c = conn3.cursor()
+        # conn3.connect("Users.db")
 
-        signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
+        # current_user = username
+        # priv_hex_key = 0
+        # c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
+        # for row in c.fetchall():
+        #     priv_hex_key = (row[0])
+        # priv_hex_key = bytes(priv_hex_key,'utf-8')
+
+        # conn3.commit()
+        # conn3.close()
+
+
+
+        signing_key = nacl.signing.SigningKey(hex_priv_key, encoder=nacl.encoding.HexEncoder)
 
             # Serialize the verify key to send it to a third party
         #verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
@@ -599,7 +634,7 @@ class MainApp(object):
             
         pubkey_hex_str = pubkey_hex.decode(ENCODING)
 
-        message = bytes("What pie would you like?",ENCODING)
+        message = bytes("What fez would you like?",ENCODING)
         #message = bytes((chr(128184)),ENCODING)
 
         server_pubkey_bytes = bytes(server_pubkey,ENCODING)
@@ -654,6 +689,10 @@ class MainApp(object):
     @cherrypy.expose
     def receive_message(self):
         print("Sending message")
+
+    # @cherrypy.expose
+    # def getusername(self):
+    #     return self.username
 
 
     
