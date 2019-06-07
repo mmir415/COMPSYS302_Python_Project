@@ -33,17 +33,35 @@ class apiList(object):
     @cherrypy.expose              
     def rx_broadcast(self):
         received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
+        
         print("Sender:")
         sender_logins = (received_data)["loginserver_record"]
         print (sender_logins)
         login_list = (sender_logins.split(","))
         print(login_list)
         sender_name = login_list[0]
+        sender_pubkey = login_list[1]
+        server_time = login_list[2]
+        sender_signature = received_data["signature"]
         print(sender_name)
+        sender_created_at = received_data["sender_created_at"]
 
         message = received_data.get('message').encode('utf-8')
+
+        sender_list = [sender_name,message,sender_pubkey,server_time,sender_signature,sender_created_at]
+        conn5 = sqlite3.connect("Users.db")
+        c = conn5.cursor()
+        
+        try:
+            c.execute('''INSERT INTO Broadcasts(username,message,sender_public_key,server_time,signature,s)
+                VALUES(?,?,?,?,?,?)''',sender_list)
+        except sqlite3.IntegrityError:
+            pass
         print("Broadcast:")
         print(message)
+        conn5.commit()
+        conn5.close()
+
         
 
         response = {
@@ -73,13 +91,7 @@ class apiList(object):
 
         #Everything between here and en_message is to display who it is, and needs clean up
         print("Private Sender:")
-        sender_logins = (received_data)["loginserver_record"]
-        print (sender_logins)
-        login_list = (sender_logins.split(","))
-        print(login_list)
-        sender_name = login_list[0]
-        sender_pubkey = login_list[1]
-        print(sender_name)
+        
 
         en_message = received_data.get('encrypted_message').encode('utf-8')
         current_user = str(apiList.username)
@@ -108,6 +120,34 @@ class apiList(object):
         decrypted = (sealed_box.decrypt(en_message, encoder=nacl.encoding.HexEncoder))
         de_message = (decrypted.decode('utf-8'))
         #de_message = bytes(de_message,'utf-8')
+        sender_logins = (received_data)["loginserver_record"]
+        print (sender_logins)
+        login_list = (sender_logins.split(","))
+        print(login_list)
+        sender_name = login_list[0]
+        sender_pubkey = login_list[1]
+        sender_pubkey = login_list[1]
+        server_time = login_list[2]
+        sender_signature = received_data["signature"]
+        print(sender_name)
+        sender_created_at = received_data["sender_created_at"]
+        print(sender_name)
+
+        message = received_data.get('message').encode('utf-8')
+
+        sender_list = [sender_name,de_message,sender_pubkey,server_time,sender_signature,sender_created_at]
+        conn5 = sqlite3.connect("Users.db")
+        c = conn5.cursor()
+        
+        try:
+            c.execute('''INSERT INTO Private Messages(username,message,sender_public_key,server_time,signature,sender_created_at)
+                VALUES(?,?,?,?,?,?)''',sender_list)
+        except sqlite3.IntegrityError:
+            pass
+        print("Broadcast:")
+        print(message)
+        conn5.commit()
+        conn5.close()
 
         print("Private Message:")
         print(en_message)
@@ -160,6 +200,12 @@ class MainApp(object):
             Page += 'Message: <input type="text" name="chat"/><br/>'
             #Page += 'Password: <input type="password" name="password"/>'
             Page += '<input type="submit" value="Send Broadcast"/></form>'
+
+            Page += '<form action="/message_setup" method="post" enctype="multipart/form-data">'
+            Page += 'Username: <input type="text" name="target_username"/><br/>'
+            Page += 'Message: <input type="text" name="message"/>'
+            Page += '<input type="submit" value="Login"/></form>'
+            
         except KeyError: #There is no username
             Page += '<img itemprop="contentURL" src="http://www.uidownload.com/files/765/758/365/speech-bubble-icon-free-vector.jpg" alt="Speech Bubble Icon Free Vector screenshot" width="160" height="200" class="center"><br/>'
             Page += '<div class = "w3-container w3-red"><p align = center><font color ="white">Click here to <a href ="login">login</a></font></p></div>.'
@@ -206,7 +252,7 @@ class MainApp(object):
             cherrypy.session['password'] = password
             apiList.username = username
             MainApp.report(self,username,password,hex_priv_key)
-            MainApp.private_message(self,username,password,hex_priv_key)
+            #MainApp.private_message(self,username,password,hex_priv_key)
 
            
             
@@ -593,6 +639,45 @@ class MainApp(object):
 
             # response = json.dumps(response)
             # print(response)
+
+    def message_setup(self,target_username=None,message=None):
+        Page = startHTML
+
+        try:
+            conn6 = sqlite3.connect("Users.db")
+            c = conn6.cursor()
+            current_user = target_username
+            hex_pub_key = 0
+            ip = str("none")
+            private_key = nacl.signing.SigningKey.generate() #Private key
+        
+            c.execute("""SELECT publickey,ip FROM Users WHERE username =?""",(current_user,))
+            for row in c.fetchall():
+                hex_pub_key = (row[0])
+                ip = (row[1])
+
+                
+            hex_pub_key = bytes(hex_pub_key,'utf-8')
+            
+                    # conn3 = sqlite3.connect("Users.db")
+        # c = conn3.cursor()
+        # conn3.connect("Users.db")
+
+        # current_user = username
+        # priv_hex_key = 0
+        # c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
+        # for row in c.fetchall():
+        #     priv_hex_key = (row[0])
+        # priv_hex_key = bytes(priv_hex_key,'utf-8')
+
+        # conn3.commit()
+        # conn3.close()
+            print("message")
+        except:
+                 Page+= "<p>This user is not online</p> <a href='/signout'>Sign out</a>"
+
+        
+        print("hello")
     def private_message(self,username,password,hex_priv_key):
         #DMing Tomas
         #server_pubkey = '67e5107702196a80bff43b46c25531bc7f0cbbb44db5d24bd89077387abc73b6'
@@ -741,210 +826,3 @@ def pubkeyAutho():
 }
     json_payload = json.dumps(payload)
     byte_payload = bytes(json_payload, "utf-8")
-
-
-
-   # try:
-   #     req = urllib.request.Request(addkey_url, data=byte_payload, headers=headers)
-   #    response = urllib.request.urlopen(req)
-   #     data = response.read() # read the received bytes
-   #     encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
-   #     response.close()
-
-   # except urllib.error.HTTPError as error:
-    
-   #     print(error.read())
-   #     exit()
-
-   # JSON_object = json.loads(data.decode(encoding))
-   # if (JSON_object["response"] == "ok"):
-   #     print("PUBKEY SUCC")
-   #     cherrypy.session['signing_key'] = signing_key
-   #     return 0
-   # else:
-   #     print ("Fail")
-   #     return 1pubk
-# @cherrypy.expose
-# def listusers(username,password):
-    
-#     addkey_url = "http://cs302.kiwi.land/api/list_users"
-#     credentials = ('%s:%s' % (username, password))
-#     b64_credentials = base64.b64encode(credentials.encode('ascii'))
-#     headers = {
-#         'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
-#         'Content-Type' : 'application/json; charset=utf-8',
-#     }
-
-#     #create request and open it into a response object
-#     req = urllib.request.Request(url=addkey_url, headers=headers)
-#     response = urllib.request.urlopen(req)
-#     #read and process the received bytes
-
-#     data = response.read() # read the received bytes
-#     encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
-#     response.close()
-
-#     JSON_object = json.loads(data.decode(encoding))
-#     print(json.dumps(JSON_object,indent=4))
-
-
-# @cherrypy.expose    
-# def get_privatedata(username,password):
-
-#     addkey_url = "http://cs302.kiwi.land/api/get_privatedata"
-#     credentials = ('%s:%s' % (username, password))
-#     b64_credentials = base64.b64encode(credentials.encode('ascii'))
-#     headers = {
-#         'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
-#         'Content-Type' : 'application/json; charset=utf-8',
-#     }
- 
-# #create request and open it into a response object
-
-# #read and process the received bytes
-
-# #create request and open it into a response object
-#     try:
-#         req = urllib.request.Request(url=addkey_url, headers=headers)
-#         response = urllib.request.urlopen(req)
-
-#     except urllib.error.HTTPError as err:
-#         print("Error: " + str(err.code))
-#     else:
-#         data = response.read() # read the received bytes
-#         encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
-#         response.close()
-
-#         JSON_object = json.loads(data.decode(encoding))
-#         if JSON_object["privatedata"] == "7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5":
-#             print(json.dumps(JSON_object,indent=4))
-#             return JSON_object["privatedata"]
-
-#         else:
-#             return 1
-
-# @cherrypy.expose
-# def broadcast(username,password):
-#     timing = str(time.time())
-#     ENCODING = 'utf-8'
-
-#     login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
-#     signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
-
-#     # Serialize the verify key to send it to a third party
-# #verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
-#     pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
-    
-#     pubkey_hex_str = pubkey_hex.decode(ENCODING)
-
-#     message = "Hello there"
-
-#     message_bytes = bytes(login_server_record + message + timing, encoding=ENCODING)
-#     signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
-
-#     signature_hex_str = signed.signature.decode(ENCODING)
-
-#     addkey_url = "http://172.23.155.225:80/api/rx_broadcast"
-
-#     credentials = ('%s:%s' % (username, password))
-#     b64_credentials = base64.b64encode(credentials.encode('ascii'))
-#     headers = {
-#         'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
-#         'Content-Type' : 'application/json; charset=utf-8',
-#     }
-
-#     payload = {
-#         "loginserver_record": login_server_record,
-#         "message": message,
-#         "sender_created_at": timing,
-#         "signature": signature_hex_str
-#     }
-#     json_payload = json.dumps(payload)
-#     byte_payload = bytes(json_payload, ENCODING)
-
-#     try:   
-#         req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
-#         response = urllib.request.urlopen(req)
-#     except urllib.error.HTTPError as err:
-#         print("Error: " + str(err.code))
-#     else:
-#         data = response.read() # read the received bytes
-#         encoding = response.info().get_content_charset(ENCODING) #load encoding if possible (default to utf-8)
-#         response.close()
-
-#         JSON_object = json.loads(data.decode(encoding))
-#         print(JSON_object)
-
-#         # received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
-#         response = JSON_object.get('response')
-#         print("Broadcast:")
-#         print(response)
-
-#         # response = {
-#         # 'response : ok'
-#         # }
-
-#         # response = json.dumps(response)
-#         # print(response)
-
-# @cherrypy.expose
-# def receive_message(self):
-#     print("receiving message")
-
-
-# @cherrypy.expose
-# def report(username,password):
-
-#     # Serialize the verify key to send it to a third party
-#     signing_key = nacl.signing.SigningKey(key, encoder=nacl.encoding.HexEncoder)
-#     verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
-#     pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
-#     credentials = ('%s:%s' % (username, password))
-#     b64_credentials = base64.b64encode(credentials.encode('ascii'))
-#     headers = {
-#         'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
-#         'Content-Type' : 'application/json; charset=utf-8',
-#     }
-#     pubkey_hex_str = pubkey_hex.decode('utf-8')
-
-#     message_bytes = bytes(pubkey_hex_str + username, encoding='utf-8')
-#     signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
-
-#     signature_hex_str = signed.signature.decode('utf-8')
-
-#     addkey_url = "http://cs302.kiwi.land/api/report"
-
-#     payload = {
-#         "connection_location": "2",
-#         "connection_address": "172.23.155.225",
-#         "incoming_pubkey": pubkey_hex_str
-    
-#     }
-#     json_payload = json.dumps(payload)
-#     byte_payload = bytes(json_payload, "utf-8")
-
-#     try:   
-#         req = urllib.request.Request(url=addkey_url, data=byte_payload, headers=headers)
-#         response = urllib.request.urlopen(req)
-#     except urllib.error.HTTPError as err:
-#         print("Error: " + str(err.code))
-#     else:
-#         data = response.read() # read the received bytes
-#         encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
-#         response.close()
-
-#         JSON_object = json.loads(data.decode(encoding))
-#         print(JSON_object)
-
-
-
-
-
-    
-   # if ((username.lower() == "user") and (password.lower() == "password") or (username.lower() == "mmir415") and (password.lower() == "mmir415_339816700") ):
-  
-     #   print("Success")
-    #return 0
-   # else:
-   #     print("Failure")
-   #     return 1
