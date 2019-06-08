@@ -8,6 +8,7 @@ import time
 import json
 import sqlite3
 import socket
+import threading
 from jinja2 import Environment,FileSystemLoader
 #from example_client import ping
 
@@ -245,6 +246,12 @@ class MainApp(object):
     def messaging(self):
         Page = viro.get_template("login.html")
         return Page.render(session=cherrypy.session)
+
+    # @cherrypy.expose
+    # def message_successful(self):
+    #     Page = viro.get_template("login.html")
+    #     return Page.render(session=cherrypy.session)
+
 
         
     # LOGGING IN AND OUT
@@ -543,6 +550,18 @@ class MainApp(object):
             else:
                 return 1
 
+    # @cherrypy.expose
+    # def threads(self):
+    #     user_list = MainApp.listusers(self,cherrypy.session['username'],cherrypy.session['password'])
+
+    #     for user in user_list:
+    #             ip_address = user_list["connection_address"]
+    #             thread = threading.Thread(target=broadcast,args=(cherrypy.session['username'],ip_address,cherrypy.session['password'],cherrypy.session['chat'],cherrypy.session['hex_private_key']))
+    #             print(ip_address)
+    #             thread.start()
+                #MainApp.broadcast(self,username,ip_address,password,chat,hex_private_key)
+          
+
     @cherrypy.expose
     def broadcast_setup(self,chat):
         Page = startHTML
@@ -561,15 +580,23 @@ class MainApp(object):
         hex_private_key = bytes(hex_private_key,'utf-8')
         print("YO")
         print(hex_private_key)
+        cherrypy.session['hex_private_key'] = hex_private_key
         for x in  (MainApp.listusers(self,username,password))["users"]:
+
             try:
-                ip_address = x.get("connection_address")
-            #ip_address = "172.23.94.203:1234"
-            #ip_address = "127.0.0.1:2243"
+                ip_address = x["connection_address"]
+                thread = threading.Thread(target=MainApp.broadcast,args=(self,username,ip_address,password,chat, hex_private_key))
                 print(ip_address)
-                MainApp.broadcast(self,username,ip_address,password,chat,hex_private_key)
+                thread.start()
             except:
                 pass
+        #for x in  (MainApp.listusers(self,username,password))["users"]:
+            # try:
+            #     ip_address = x.get("connection_address")
+            #     print(ip_address)
+            #     MainApp.broadcast(self,username,ip_address,password,chat,hex_private_key)
+            # except:
+            #     pass
            
         
         Page += "Successfully broadcasted, " + cherrypy.session['username'] + "!<br/>"
