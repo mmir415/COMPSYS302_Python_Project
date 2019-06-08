@@ -8,9 +8,11 @@ import time
 import json
 import sqlite3
 import socket
+from jinja2 import Environment,FileSystemLoader
 #from example_client import ping
 
 startHTML = "<html><head><title>Yakker!</title><link rel='stylesheet' href='/static/example.css' /></head><body>"
+viro = Environment(loader=FileSystemLoader(searchpath = "html_files"))
 host_name = socket.gethostname()
 print(host_name, type(host_name))
 #ip = socket.gethostbyname(host_name)
@@ -53,7 +55,7 @@ class apiList(object):
         c = conn5.cursor()
         
         try:
-            c.execute('''INSERT INTO Broadcasts(username,message,sender_public_key,server_time,signature,s)
+            c.execute('''INSERT INTO Broadcasts(username,message,sender_public_key,server_time,signature,sender_created_at)
                 VALUES(?,?,?,?,?,?)''',sender_list)
         except sqlite3.IntegrityError:
             pass
@@ -133,19 +135,16 @@ class apiList(object):
         sender_created_at = received_data["sender_created_at"]
         print(sender_name)
 
-        message = received_data.get('message').encode('utf-8')
 
         sender_list = [sender_name,de_message,sender_pubkey,server_time,sender_signature,sender_created_at]
         conn5 = sqlite3.connect("Users.db")
         c = conn5.cursor()
         
         try:
-            c.execute('''INSERT INTO Private Messages(username,message,sender_public_key,server_time,signature,sender_created_at)
+            c.execute('''INSERT INTO 'Private Messages' (username,message,sender_public_key,server_time,signature,sender_created_at)
                 VALUES(?,?,?,?,?,?)''',sender_list)
         except sqlite3.IntegrityError:
             pass
-        print("Broadcast:")
-        print(message)
         conn5.commit()
         conn5.close()
 
@@ -199,16 +198,19 @@ class MainApp(object):
             Page += '<form action="/broadcast_setup" method="post" enctype="multipart/form-data">'
             Page += 'Message: <input type="text" name="chat"/><br/>'
             #Page += 'Password: <input type="password" name="password"/>'
-            Page += '<input type="submit" value="Send Broadcast"/></form>'
+            Page += '<input type="submit" value="Send Broadcast"/></form><br/>'
 
             Page += '<form action="/message_setup" method="post" enctype="multipart/form-data">'
             Page += 'Username: <input type="text" name="target_username"/><br/>'
-            Page += 'Message: <input type="text" name="message"/>'
-            Page += '<input type="submit" value="Login"/></form>'
+            Page += 'Message: <input type="text" name="secret_message"/>'
+            Page += '<input type="submit" value="Send Message"/></form><br/>'
             
         except KeyError: #There is no username
             Page += '<img itemprop="contentURL" src="http://www.uidownload.com/files/765/758/365/speech-bubble-icon-free-vector.jpg" alt="Speech Bubble Icon Free Vector screenshot" width="160" height="200" class="center"><br/>'
             Page += '<div class = "w3-container w3-red"><p align = center><font color ="white">Click here to <a href ="login">login</a></font></p></div>.'
+        #else:
+            #tmpl viro.get_template('index.html')
+            #return tmpl.render(username=username)
         return Page
         
     @cherrypy.expose
@@ -245,6 +247,7 @@ class MainApp(object):
             hex_priv_key = (row[0])
         hex_priv_key = bytes(hex_priv_key,'utf-8')
         error = MainApp.ping(self,username, password,hex_priv_key)
+        cherrypy.session['hex_priv_key'] = hex_priv_key
         
         if (error == 0):
         # & (checked == 0)):
@@ -279,13 +282,13 @@ class MainApp(object):
                 #  WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
                 
 
-                try:
+                # try:
                     
-                    ip_address = x.get("connection_address")
-                    print(ip_address)
-                    MainApp.ping_check(self,username,password,ip_address,hex_priv_key)
-                except:
-                    pass
+                #     ip_address = x.get("connection_address")
+                #     print(ip_address)
+                #     MainApp.ping_check(self,username,password,ip_address,hex_priv_key)
+                # except:
+                #     pass
                 # c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
                 # for row in c.fetchall():
                 #     hex_priv_key = (row[0])
@@ -639,25 +642,42 @@ class MainApp(object):
 
             # response = json.dumps(response)
             # print(response)
-
-    def message_setup(self,target_username=None,message=None):
+    @cherrypy.expose
+    def message_setup(self,target_username,secret_message):
+        print("THIS IS RIGHT AT THE START OF THE SETUP")
         Page = startHTML
+        cherrypy.session['target_username'] = target_username
+        cherrypy.session['secret_message'] = secret_message
+        print("THIS IS AFTER SOME SESSION STUFF")
+        
 
         try:
             conn6 = sqlite3.connect("Users.db")
             c = conn6.cursor()
-            current_user = target_username
+            target_user = target_username
             hex_pub_key = 0
             ip = str("none")
-            private_key = nacl.signing.SigningKey.generate() #Private key
+            
         
-            c.execute("""SELECT publickey,ip FROM Users WHERE username =?""",(current_user,))
+            c.execute("""SELECT publickey,ip FROM Users WHERE username =?""",(target_user,))
             for row in c.fetchall():
                 hex_pub_key = (row[0])
                 ip = (row[1])
+                conn6.commit()
+                conn6.close()
 
+            print(hex_pub_key)
+            print(ip)
+            username = cherrypy.session['username']
+            password = cherrypy.session['password']
+            hex_priv_key = cherrypy.session['hex_priv_key']
+            print(type(hex_priv_key))
+
+            
                 
-            hex_pub_key = bytes(hex_pub_key,'utf-8')
+            #hex_priv_key = bytes(hex_priv_key,'utf-8')
+            
+            MainApp.private_message(username,password,hex_priv_key,ip,target_user,hex_pub_key)
             
                     # conn3 = sqlite3.connect("Users.db")
         # c = conn3.cursor()
@@ -673,22 +693,26 @@ class MainApp(object):
         # conn3.commit()
         # conn3.close()
             print("message")
-        except:
-                 Page+= "<p>This user is not online</p> <a href='/signout'>Sign out</a>"
+        except Exception as E:
+            print(E)
+            Page+= "<p>This user is not online</p> <a href='/signout'>Sign out</a>"
+        raise cherrypy.HTTPRedirect('/signout')
 
         
         print("hello")
-    def private_message(self,username,password,hex_priv_key):
+    
+    def private_message(username,password,hex_priv_key,ip,target_user,hex_pub_key):
         #DMing Tomas
         #server_pubkey = '67e5107702196a80bff43b46c25531bc7f0cbbb44db5d24bd89077387abc73b6'
        # target_user = "tant836"
        # target_ip = "172.24.5.136:1234"
 
-       #DMing Myself
-        server_pubkey = "ecc575ea1916c57d5f11a1135d4d03f514d893d3889f53bfad7634cc24877a66"
+        print("DMing Myself")
+       
+        server_pubkey = hex_pub_key
         #target_user = "admin"
-        target_user = "keva419"
-        target_ip = "172.23.74.180:1234"
+        target_user = target_user
+        target_ip = ip
 #target_user = "tden328"
 
         login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
