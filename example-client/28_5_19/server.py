@@ -249,8 +249,12 @@ class MainApp(object):
         current_user = username
         api_key = load_new_api_key(self,checking_user,checking_password)
         print(api_key)
-        hex_priv_key = 0
-        try:
+        if api_key == "nah fam":
+        
+            raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
+        else:
+            api_key_header =API_header(api_key,username)
+            print(api_key_header)
             private_key = nacl.signing.SigningKey.generate() #Private key
             c.execute("""UPDATE Users SET
                 privatekey =? 
@@ -259,9 +263,7 @@ class MainApp(object):
             c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
             for row in c.fetchall():
                 hex_priv_key = (row[0])
-                error = MainApp.ping(self,username, password,hex_priv_key)
-        except:
-            raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
+                error = MainApp.ping(self,username, password,hex_priv_key,api_key_header)
         #hex_priv_key = bytes(hex_priv_key,'utf-8')
         #error = MainApp.ping(self,username, password,hex_priv_key)
         
@@ -360,7 +362,7 @@ class MainApp(object):
                 print(JSON_object)
 
     @cherrypy.expose
-    def ping(self,username,password,hex_priv_key):
+    def ping(self,username,password,hex_priv_key,api_key_header):
 
      # Serialize the verify key to send it to a third party
         hex_priv_key = str(hex_priv_key)
@@ -381,10 +383,7 @@ class MainApp(object):
         #create HTTP BASIC authorization header
         credentials = ('%s:%s' % (username, password))
         b64_credentials = base64.b64encode(credentials.encode('ascii'))
-        headers = {
-            'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
-            'Content-Type' : 'application/json; charset=utf-8',
-        }
+        headers = api_key_header
 
         payload = {
             "pubkey": pubkey_hex_str,
@@ -847,6 +846,17 @@ def load_new_api_key(self,username,password):
         JSON_object = json.loads(data.decode(encoding))
         if JSON_object["response"] == "ok":
             return JSON_object["api_key"]
+        else:
+            return "nah fam"
+
+def API_header(api_key,username):
+#create HTTP API Key authorization header
+    headers = {
+        "X-username":username,
+        "X-apikey":api_key,
+        'Content-Type' : 'application/json; charset='+'utf-8'
+    }
+    return headers
 def pubkeyAutho():
     signing_key = nacl.signing.SigningKey.generate()
 
