@@ -563,7 +563,6 @@ class MainApp(object):
             #ip_address = "127.0.0.1:2243"
                 print(ip_address)
                 MainApp.broadcast(self,username,ip_address,password,chat,hex_private_key)
-
             except:
                 pass
            
@@ -592,6 +591,9 @@ class MainApp(object):
         pubkey_hex_str = pubkey_hex.decode(ENCODING)
 
         message = chat
+        if message == "":
+        
+            return json.dumps({"response":"empty_message"})
 
         message_bytes = bytes(login_server_record + message + timing, encoding=ENCODING)
         signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
