@@ -648,9 +648,12 @@ class MainApp(object):
     def message_setup(self,target_username,secret_message):
         print("THIS IS RIGHT AT THE START OF THE SETUP")
         Page = startHTML
-        cherrypy.session['target_username'] = target_username
-        cherrypy.session['secret_message'] = secret_message
-        print("THIS IS AFTER SOME SESSION STUFF")
+        if target_username != "" and secret_message != "":
+            cherrypy.session['target_username'] = target_username
+            cherrypy.session['secret_message'] = secret_message
+            print("THIS IS AFTER SOME SESSION STUFF")
+        else:
+            raise cherrypy.HTTPRedirect('/signout')
         
 
         try:
