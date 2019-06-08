@@ -218,8 +218,12 @@ class MainApp(object):
         
     @cherrypy.expose
     def login(self, bad_attempt = 0):
-        Page = viro.get_template("login.html")
-        return Page.render(session=cherrypy.session)
+        if bad_attempt != 0:
+            Page = viro.get_template("index.html")
+            Page += "<font color='red'>Invalid username/password!</font>"
+        else:
+            Page = viro.get_template("login.html")
+            return Page.render(session=cherrypy.session)
         # Page = startHTML 
         # if bad_attempt != 0:
         #     Page += "<font color='red'>Invalid username/password!</font>"
@@ -238,39 +242,37 @@ class MainApp(object):
     # LOGGING IN AND OUT
     @cherrypy.expose
     def signin(self, username=None, password=None):
+        checking_user = username
+        checking_password = password
         conn1 = sqlite3.connect("Users.db")
         c = conn1.cursor()
         current_user = username
+        api_key = load_new_api_key(self,checking_user,checking_password)
+        print(api_key)
         hex_priv_key = 0
-        private_key = nacl.signing.SigningKey.generate() #Private key
-        c.execute("""UPDATE Users SET
-                 privatekey =? 
-                 WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
-        """Check their name and password and send them either to the main page, or back to the main login screen."""
-        c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
-        for row in c.fetchall():
-            hex_priv_key = (row[0])
-        hex_priv_key = bytes(hex_priv_key,'utf-8')
-        error = MainApp.ping(self,username, password,hex_priv_key)
-        cherrypy.session['hex_priv_key'] = hex_priv_key
+        try:
+            private_key = nacl.signing.SigningKey.generate() #Private key
+            c.execute("""UPDATE Users SET
+                privatekey =? 
+                WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
+                
+            c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
+            for row in c.fetchall():
+                hex_priv_key = (row[0])
+                error = MainApp.ping(self,username, password,hex_priv_key)
+        except:
+            raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
+        #hex_priv_key = bytes(hex_priv_key,'utf-8')
+        #error = MainApp.ping(self,username, password,hex_priv_key)
         
         if (error == 0):
         # & (checked == 0)):
             cherrypy.session['username'] = username
             cherrypy.session['password'] = password
+            cherrypy.session['hex_priv_key'] = hex_priv_key
             apiList.username = username
             MainApp.report(self,username,password,hex_priv_key)
-            #MainApp.private_message(self,username,password,hex_priv_key)
 
-           
-            
-            # my_Key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
-
-            # c.execute("""UPDATE Users
-            #  SET privatekey = '00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
-            #    WHERE username = 'mmir415'""")
-            # current_user = username
-            # hex_priv_key = 0
             
             for x in  (MainApp.listusers(self,username,password))["users"]:
                 #Now we do databases
@@ -280,23 +282,6 @@ class MainApp(object):
                 VALUES(?,?,?,?,?,?)''',userlist)
                 except sqlite3.IntegrityError:
                     pass
-
-                # private_key = nacl.signing.SigningKey.generate() #Private key
-                # c.execute("""UPDATE Users SET
-                #  privatekey =? 
-                #  WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
-                
-
-                # try:
-                    
-                #     ip_address = x.get("connection_address")
-                #     print(ip_address)
-                #     MainApp.ping_check(self,username,password,ip_address,hex_priv_key)
-                # except:
-                #     pass
-                # c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
-                # for row in c.fetchall():
-                #     hex_priv_key = (row[0])
 
                 print(hex_priv_key)
                     
@@ -328,6 +313,8 @@ class MainApp(object):
         else:
             cherrypy.lib.sessions.expire()
         raise cherrypy.HTTPRedirect('/')
+        
+
     @cherrypy.expose
     def report(self,username,password,hex_priv_key):
 
@@ -376,6 +363,8 @@ class MainApp(object):
     def ping(self,username,password,hex_priv_key):
 
      # Serialize the verify key to send it to a third party
+        hex_priv_key = str(hex_priv_key)
+        hex_priv_key = bytes(hex_priv_key,'utf-8')
         signing_key = nacl.signing.SigningKey(hex_priv_key, encoder=nacl.encoding.HexEncoder)
         verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
         pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
@@ -828,6 +817,36 @@ class MainApp(object):
 ###
 ### Functions only after here
 ###
+@cherrypy.expose
+def load_new_api_key(self,username,password):
+
+    addkey_url = "http://cs302.kiwi.land/api/load_new_apikey"
+
+    X_username = username
+    X_password = password
+
+
+    #create HTTP BASIC authorization header
+    credentials = ('%s:%s' % (username, password))
+    b64_credentials = base64.b64encode(credentials.encode('ascii'))
+    headers = {
+        'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+        'Content-Type' : 'application/json; charset=utf-8',
+    }
+
+    try:   
+        req = urllib.request.Request(url=addkey_url, headers=headers)
+        response = urllib.request.urlopen(req)
+    except urllib.error.HTTPError as err:
+        print("Error: " + str(err.code))
+    else:
+        data = response.read() # read the received bytes
+        encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+        response.close()
+
+        JSON_object = json.loads(data.decode(encoding))
+        if JSON_object["response"] == "ok":
+            return JSON_object["api_key"]
 def pubkeyAutho():
     signing_key = nacl.signing.SigningKey.generate()
 
