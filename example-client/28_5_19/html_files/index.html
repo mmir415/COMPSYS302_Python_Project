@@ -1,12 +1,9 @@
-<html>
-<head>
-<title>Yakker!</title>
-<link rel='stylesheet' href='/static/example.css' />
-<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.4.0.min.js"></script>
-</head>
-<body>
-{% block content %}{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+ <h1 align = center><font color ='blue'> Welcome to Yakker!</font></h1><br/>
+ <form action="/signin" method="post" enctype="multipart/form-data">
+  Username: <input type="text" name="username"/><br/>
+  Password: <input type="password" name="password"/>
+    <input type="submit" value="Login"/></form>
 
-</body>
-
-</html>
+{% endblock %}

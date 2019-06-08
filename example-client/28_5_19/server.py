@@ -190,40 +190,45 @@ class MainApp(object):
     # PAGES (which return HTML that can be viewed in browser)
     @cherrypy.expose
     def index(self):
-        Page = startHTML + "<h1 align = center><font color ='blue'> Welcome to Yakker!</font></h1><br/>"
         
-        try:
-            Page += "Hello " + cherrypy.session['username'] + "!<br/>"
-            Page += "Vae victus! <a href='/signout'>Sign out</a>"
-            Page += '<form action="/broadcast_setup" method="post" enctype="multipart/form-data">'
-            Page += 'Message: <input type="text" name="chat"/><br/>'
-            #Page += 'Password: <input type="password" name="password"/>'
-            Page += '<input type="submit" value="Send Broadcast"/></form><br/>'
+        Page = viro.get_template("index.html")
+        return Page.render(session=cherrypy.session)
+        # Page = startHTML + "<h1 align = center><font color ='blue'> Welcome to Yakker!</font></h1><br/>"
+        
+        # try:
+        #     Page += "Hello " + cherrypy.session['username'] + "!<br/>"
+        #     Page += "Vae victus! <a href='/signout'>Sign out</a>"
+        #     Page += '<form action="/broadcast_setup" method="post" enctype="multipart/form-data">'
+        #     Page += 'Message: <input type="text" name="chat"/><br/>'
+        #     #Page += 'Password: <input type="password" name="password"/>'
+        #     Page += '<input type="submit" value="Send Broadcast"/></form><br/>'
 
-            Page += '<form action="/message_setup" method="post" enctype="multipart/form-data">'
-            Page += 'Username: <input type="text" name="target_username"/><br/>'
-            Page += 'Message: <input type="text" name="secret_message"/>'
-            Page += '<input type="submit" value="Send Message"/></form><br/>'
+        #     Page += '<form action="/message_setup" method="post" enctype="multipart/form-data">'
+        #     Page += 'Username: <input type="text" name="target_username"/><br/>'
+        #     Page += 'Message: <input type="text" name="secret_message"/>'
+        #     Page += '<input type="submit" value="Send Message"/></form><br/>'
             
-        except KeyError: #There is no username
-            Page += '<img itemprop="contentURL" src="http://www.uidownload.com/files/765/758/365/speech-bubble-icon-free-vector.jpg" alt="Speech Bubble Icon Free Vector screenshot" width="160" height="200" class="center"><br/>'
-            Page += '<div class = "w3-container w3-red"><p align = center><font color ="white">Click here to <a href ="login">login</a></font></p></div>.'
-        #else:
-            #tmpl viro.get_template('index.html')
-            #return tmpl.render(username=username)
-        return Page
+        # except KeyError: #There is no username
+        #     Page += '<img itemprop="contentURL" src="http://www.uidownload.com/files/765/758/365/speech-bubble-icon-free-vector.jpg" alt="Speech Bubble Icon Free Vector screenshot" width="160" height="200" class="center"><br/>'
+        #     Page += '<div class = "w3-container w3-red"><p align = center><font color ="white">Click here to <a href ="login">login</a></font></p></div>.'
+        # else:
+        #     tmpl viro.get_template('index.html')
+        #     return tmpl.render(username=username)
+        # return Page
         
     @cherrypy.expose
     def login(self, bad_attempt = 0):
-        Page = startHTML 
-        if bad_attempt != 0:
-            Page += "<font color='red'>Invalid username/password!</font>"
+        Page = viro.get_template("login.html")
+        return Page.render(session=cherrypy.session)
+        # Page = startHTML 
+        # if bad_attempt != 0:
+        #     Page += "<font color='red'>Invalid username/password!</font>"
             
-        Page += '<form action="/signin" method="post" enctype="multipart/form-data">'
-        Page += 'Username: <input type="text" name="username"/><br/>'
-        Page += 'Password: <input type="password" name="password"/>'
-        Page += '<input type="submit" value="Login"/></form>'
-        return Page
+        # Page += '<form action="/signin" method="post" enctype="multipart/form-data">'
+        # Page += 'Username: <input type="text" name="username"/><br/>'
+        # Page += 'Password: <input type="password" name="password"/>'
+        # Page += '<input type="submit" value="Login"/></form>'
+        # return Page
     
     @cherrypy.expose    
     def sum(self, a=0, b=0): #All inputs are strings by default
@@ -310,7 +315,7 @@ class MainApp(object):
             
             
         #    pubkeyAutho()
-            raise cherrypy.HTTPRedirect('/')
+            raise cherrypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
 
