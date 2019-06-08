@@ -677,7 +677,7 @@ class MainApp(object):
                 
             #hex_priv_key = bytes(hex_priv_key,'utf-8')
             
-            MainApp.private_message(username,password,hex_priv_key,ip,target_user,hex_pub_key)
+            MainApp.private_message(username,password,hex_priv_key,ip,target_user,hex_pub_key,secret_message)
             
                     # conn3 = sqlite3.connect("Users.db")
         # c = conn3.cursor()
@@ -701,7 +701,7 @@ class MainApp(object):
         
         print("hello")
     
-    def private_message(username,password,hex_priv_key,ip,target_user,hex_pub_key):
+    def private_message(username,password,hex_priv_key,ip,target_user,hex_pub_key,secret_message):
         #DMing Tomas
         #server_pubkey = '67e5107702196a80bff43b46c25531bc7f0cbbb44db5d24bd89077387abc73b6'
        # target_user = "tant836"
@@ -718,6 +718,7 @@ class MainApp(object):
         login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
         timing = str(time.time())
         ENCODING = 'utf-8'
+        secret_message = str(secret_message)
 
         # conn3 = sqlite3.connect("Users.db")
         # c = conn3.cursor()
@@ -743,7 +744,7 @@ class MainApp(object):
             
         pubkey_hex_str = pubkey_hex.decode(ENCODING)
 
-        message = bytes("What fez would you like?",ENCODING)
+        message = bytes(secret_message,ENCODING)
         #message = bytes((chr(128184)),ENCODING)
 
         server_pubkey_bytes = bytes(server_pubkey,ENCODING)
