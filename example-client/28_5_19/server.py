@@ -240,6 +240,12 @@ class MainApp(object):
     def sum(self, a=0, b=0): #All inputs are strings by default
         output = int(a)+int(b)
         return str(output)
+
+    @cherrypy.expose
+    def messaging(self):
+        Page = viro.get_template("login.html")
+        return Page.render(session=cherrypy.session)
+
         
     # LOGGING IN AND OUT
     @cherrypy.expose
@@ -307,7 +313,7 @@ class MainApp(object):
                 
                 
             #    pubkeyAutho()
-                raise cherrypy.HTTPRedirect('/login')
+                raise cherrypy.HTTPRedirect('/messaging')
             else:
                 raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
 
