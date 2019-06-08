@@ -218,21 +218,23 @@ class MainApp(object):
         
     @cherrypy.expose
     def login(self, bad_attempt = 0):
-        if bad_attempt != 0:
-            Page = viro.get_template("index.html")
-            Page += "<font color='red'>Invalid username/password!</font>"
-        else:
-            Page = viro.get_template("login.html")
-            return Page.render(session=cherrypy.session)
-        # Page = startHTML 
+        #Do the below when you're better at jinja
         # if bad_attempt != 0:
+        #     Page = viro.get_template("index.html")
         #     Page += "<font color='red'>Invalid username/password!</font>"
+        # else:
+        #     Page = viro.get_template("login.html")
+        #     return Page.render(session=cherrypy.session)
+
+        Page = startHTML 
+        if bad_attempt != 0:
+            Page += "<font color='red'>Invalid username/password!</font>"
             
-        # Page += '<form action="/signin" method="post" enctype="multipart/form-data">'
-        # Page += 'Username: <input type="text" name="username"/><br/>'
-        # Page += 'Password: <input type="password" name="password"/>'
-        # Page += '<input type="submit" value="Login"/></form>'
-        # return Page
+        Page += '<form action="/signin" method="post" enctype="multipart/form-data">'
+        Page += 'Username: <input type="text" name="username"/><br/>'
+        Page += 'Password: <input type="password" name="password"/>'
+        Page += '<input type="submit" value="Login"/></form>'
+        return Page
     
     @cherrypy.expose    
     def sum(self, a=0, b=0): #All inputs are strings by default
@@ -249,7 +251,7 @@ class MainApp(object):
         current_user = username
         api_key = load_new_api_key(self,checking_user,checking_password)
         print(api_key)
-        if api_key == "nah fam":
+        if api_key == 1:
         
             raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
         else:
@@ -261,50 +263,53 @@ class MainApp(object):
                 WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
                 
             c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
+            hex_priv_key = "none"
             for row in c.fetchall():
                 hex_priv_key = (row[0])
-                error = MainApp.ping(self,username, password,hex_priv_key,api_key_header)
+              
+            print(hex_priv_key)
+            error = MainApp.ping(self,username, password,hex_priv_key,api_key_header)
         #hex_priv_key = bytes(hex_priv_key,'utf-8')
         #error = MainApp.ping(self,username, password,hex_priv_key)
         
-        if (error == 0):
+            if (error == 0):
         # & (checked == 0)):
-            cherrypy.session['username'] = username
-            cherrypy.session['password'] = password
-            cherrypy.session['hex_priv_key'] = hex_priv_key
-            apiList.username = username
-            MainApp.report(self,username,password,hex_priv_key)
+                cherrypy.session['username'] = username
+                cherrypy.session['password'] = password
+                cherrypy.session['hex_priv_key'] = hex_priv_key
+                apiList.username = username
+                MainApp.report(self,username,password,hex_priv_key)
 
-            
-            for x in  (MainApp.listusers(self,username,password))["users"]:
-                #Now we do databases
-                userlist = [x["connection_location"],x["connection_updated_at"],x[ "incoming_pubkey"],x[ "username"],x[ "connection_address"],x["status"]]
-                try:
-                     c.execute('''INSERT INTO Users(lastLocation,lastseenTime,publickey,username,ip,status)
-                VALUES(?,?,?,?,?,?)''',userlist)
-                except sqlite3.IntegrityError:
-                    pass
-
-                print(hex_priv_key)
-                    
-            #MainApp.listusers(self,username,password)
-            conn1.commit()
-            conn1.close() 
-            try:
-                print("Sup")
-                #MainApp.private_message(self,username,password)
-            except:
-                print("Offline")
-                pass
-            
                 
-            MainApp.receive_message(self)
-            
-            
-        #    pubkeyAutho()
-            raise cherrypy.HTTPRedirect('/login')
-        else:
-            raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
+                for x in  (MainApp.listusers(self,username,password))["users"]:
+                    #Now we do databases
+                    userlist = [x["connection_location"],x["connection_updated_at"],x[ "incoming_pubkey"],x[ "username"],x[ "connection_address"],x["status"]]
+                    try:
+                        c.execute('''INSERT INTO Users(lastLocation,lastseenTime,publickey,username,ip,status)
+                    VALUES(?,?,?,?,?,?)''',userlist)
+                    except sqlite3.IntegrityError:
+                        pass
+
+                    #print(hex_priv_key)
+                        
+                #MainApp.listusers(self,username,password)
+                conn1.commit()
+                conn1.close() 
+                try:
+                    print("Sup")
+                    #MainApp.private_message(self,username,password)
+                except:
+                    print("Offline")
+                    pass
+                
+                    
+                MainApp.receive_message(self)
+                
+                
+            #    pubkeyAutho()
+                raise cherrypy.HTTPRedirect('/login')
+            else:
+                raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
 
     @cherrypy.expose
     def signout(self):
@@ -367,6 +372,7 @@ class MainApp(object):
      # Serialize the verify key to send it to a third party
         hex_priv_key = str(hex_priv_key)
         hex_priv_key = bytes(hex_priv_key,'utf-8')
+        print(hex_priv_key)
         signing_key = nacl.signing.SigningKey(hex_priv_key, encoder=nacl.encoding.HexEncoder)
         verify_key_hex = signing_key.encode(encoder=nacl.encoding.HexEncoder)
         pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
@@ -838,6 +844,7 @@ def load_new_api_key(self,username,password):
         response = urllib.request.urlopen(req)
     except urllib.error.HTTPError as err:
         print("Error: " + str(err.code))
+        return 1
     else:
         data = response.read() # read the received bytes
         encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
@@ -847,7 +854,7 @@ def load_new_api_key(self,username,password):
         if JSON_object["response"] == "ok":
             return JSON_object["api_key"]
         else:
-            return "nah fam"
+            return 1
 
 def API_header(api_key,username):
 #create HTTP API Key authorization header
