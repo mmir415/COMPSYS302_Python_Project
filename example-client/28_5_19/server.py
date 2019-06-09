@@ -330,7 +330,11 @@ class MainApp(object):
                     cherrypy.session['hex_priv_key'] = hex_priv_key
                     apiList.username = username
                     apiList.hex_priv_key = hex_priv_key
-                    wd = cherrypy.process.plugins.BackgroundTask(60,MainApp.report(self,username,password,hex_priv_key))
+
+                    wd = cherrypy.process.plugins.BackgroundTask(60,lambda: MainApp.report(self,username,password,hex_priv_key))
+
+                    wd.start()
+                    
                     print("broadcast log below")
                     print(MainApp.broadcast_log(self))
                     print("private message log")
@@ -340,6 +344,12 @@ class MainApp(object):
                     
                     for x in  (MainApp.listusers(self,username,password))["users"]:
                         #Now we do databases
+                        ip_addresses = x["connection_address"]
+                        # try:
+                        #     MainApp.ping_check(self,username,password,ip_addresses,hex_priv_key)
+                        # except:
+                        #     print("Couldn't connect")
+                        #     pass
                         userlist = [x["connection_location"],x["connection_updated_at"],x[ "incoming_pubkey"],x[ "username"],x[ "connection_address"],x["status"]]
                         try:
                             c.execute('''INSERT INTO Users(lastLocation,lastseenTime,publickey,username,ip,status)
@@ -349,7 +359,8 @@ class MainApp(object):
 
                         #print(hex_priv_key)
                             
-                    #MainApp.listusers(self,username,password)
+                        
+                        # wb.run()
                     conn1.commit()
                     conn1.close() 
                     try:
