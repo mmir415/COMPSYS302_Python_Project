@@ -26,10 +26,20 @@ import nacl.utils
 import time
 import socket
 
-host_name = socket.gethostname()
-print(host_name, type(host_name))
+# host_name = socket.gethostname()
+# print(host_name, type(host_name))
+
+s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+try:
+    s.connect(('1.1.1.1',1))
+    IP = s.getsockname()[0]
+except:
+    IP = "172.23.134.246"
+finally:
+    s.close()
+
 #ip = socket.gethostbyname(host_name)
-ip = "172.23.134.246"
+ip = IP
 #ip = "192.168.1.15"
 # The address we listen for connections on
 #LISTEN_IP = "172.23.155.225"
