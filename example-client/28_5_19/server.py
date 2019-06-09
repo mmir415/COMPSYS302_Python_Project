@@ -191,6 +191,8 @@ class apiList(object):
 
 
 class MainApp(object):
+    username = None
+    password = None
 
 	#CherryPy Configuration
     _cp_config = {'tools.encode.on': True, 
@@ -274,8 +276,9 @@ class MainApp(object):
 
     @cherrypy.expose
     def messaging(self):
+        users = self.users_log()
         Page = viro.get_template("login.html")
-        return Page.render(session=cherrypy.session)
+        return Page.render(session=cherrypy.session,users = users)
 
     # @cherrypy.expose
     # def message_successful(self):
@@ -329,15 +332,24 @@ class MainApp(object):
                     cherrypy.session['hex_priv_key'] = hex_priv_key
                     apiList.username = username
                     apiList.hex_priv_key = hex_priv_key
+                    MainApp.username = username
+                    MainApp.password = password
 
-                    wd = cherrypy.process.plugins.BackgroundTask(60,lambda: MainApp.report(self,username,password,hex_priv_key))
+                    br = cherrypy.process.plugins.BackgroundTask(60,lambda: MainApp.report(self,username,password,hex_priv_key))
 
-                    wd.start()
+                    br.start()
+
+                    bl = cherrypy.process.plugins.BackgroundTask(30,lambda : MainApp.listusers(self,username,password))
+                    bl.start()
                     
                     print("broadcast log below")
                     print(MainApp.broadcast_log(self))
                     print("private message log")
                     print(MainApp.private_log(self))
+
+                    print("Users log below")
+                    print(MainApp.users_log(self))
+                    print("Users log finished")
                     
 
                     
@@ -832,6 +844,7 @@ class MainApp(object):
 
         try:
             username = cherrypy.session['username']
+            cherrypy.session['my_username'] = username
             password = cherrypy.session['password']
             hex_priv_key = cherrypy.session['hex_priv_key']
             target_ip = "none"
@@ -1002,6 +1015,18 @@ class MainApp(object):
         private_messages = [list(x) for x in private_messages]
         
         return(private_messages)
+
+    def users_log(self):
+        users = []
+        print(MainApp.username)
+        print(MainApp.password)
+        for x in  (MainApp.listusers(self,MainApp.username,MainApp.password))["users"]:
+            active_username = x["username"]
+            users.append(active_username)
+        alphabetical_list = users.sort()
+        print(alphabetical_list)
+        print(users)
+        return (users)
 
 
 
