@@ -10,10 +10,10 @@ import nacl.pwhash.argon2i
 
 addkey_url = "http://cs302.kiwi.land/api/get_privatedata"
 
-# username = "mmir415"
-# password = "mmir415_339816700"
-username = "keva419"
-password = "KimberleyEvans-Parker_576292546"
+username = "mmir415"
+password = "mmir415_339816700"
+#username = "keva419"
+#password = "KimberleyEvans-Parker_576292546"
 
 
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'

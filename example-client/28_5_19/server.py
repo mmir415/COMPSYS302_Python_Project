@@ -619,7 +619,6 @@ class MainApp(object):
         hex_private_key = bytes(hex_private_key,'utf-8')
         print("YO")
         print(hex_private_key)
-        cherrypy.session['hex_private_key'] = hex_private_key
         for x in  (MainApp.listusers(self,username,password))["users"]:
 
             try:

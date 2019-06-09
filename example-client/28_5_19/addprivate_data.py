@@ -32,13 +32,14 @@ saltBytes = nacl.pwhash.argon2i.SALTBYTES
 key = nacl.pwhash.argon2i.kdf(32,byte,salt,ops,mem)
 box = nacl.secret.SecretBox(key) #safe used to encrypt/decrypt messages
 private_data = {
-"prikeys": ["b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d"],
+"prikeys": ["00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d"],
 "blocked_pubkeys": ["...", "..."],
 "blocked_usernames": ["...", "..."],
 "blocked_words": ["...", "..."],
 "blocked_message_signatures": ["...", "..."],
 "favourite_message_signatures": ["...", "..."],
-"friends_usernames": ["keva419", "mede607"]
+"friends_usernames": ["keva419", "mede607"]
+
 }
 json_string = json.dumps(private_data)
 j_bytes= bytes(json_string, encoding = 'utf-8')
