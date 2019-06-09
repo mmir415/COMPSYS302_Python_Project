@@ -637,7 +637,14 @@ class MainApp(object):
         JSON_object = json.loads(data.decode(encoding))
         server_record = (json.dumps(JSON_object,indent=4))
         print(server_record)
-        return server_record
+        for key in sorted(JSON_object.values()):
+            login_server = key
+            print (key)
+            break
+   
+        print("sup")
+        print(login_server)
+        return login_server
 
     @cherrypy.expose
     def broadcast_setup(self,chat):
@@ -883,7 +890,7 @@ class MainApp(object):
         }
 
         payload = {
-            "loginserver_record": login_server_record,
+            "loginserver_record": self.login_server_record,
             "target_pubkey": server_pubkey,
             "target_username": target_user,
             "encrypted_message": en_message,
