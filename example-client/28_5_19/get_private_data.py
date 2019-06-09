@@ -64,17 +64,21 @@ box = nacl.secret.SecretBox(key) #safe used to encrypt/decrypt messages
 
 encrypted_data = str((JSON_object["privatedata"]))
 
+try:
+    
+    plaintext = box.decrypt(encrypted_data,encoder = nacl.encoding.Base64Encoder)
+except:
+        print("Invalid")
+else:
 
-plaintext = box.decrypt(encrypted_data,encoder = nacl.encoding.Base64Encoder)
-
-data = plaintext.decode('utf-8')
-print(data)
-data = json.loads(data.encode(encoding))
-print(data)
-print(type(data))
-private_keys = (data["prikeys"])
-private_key = private_keys[0]
-print(private_key)
+    data = plaintext.decode('utf-8')
+    print(data)
+    data = json.loads(data.encode(encoding))
+    print(data)
+    print(type(data))
+    private_keys = (data["prikeys"])
+    private_key = private_keys[0]
+    print(private_key)
 
 
 

@@ -1,8 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
  <p>Hello {{ session['username'] }}!</p>
-   "Vae victus! <a href='/signout'>Sign out</a>"
-    <form action="/broadcast_setup" method="post" enctype="multipart/form-data">'
-        'Message: <input type="text" name="chat"/><br/>'
-      <input type="submit" value="Send Broadcast"/></form><br/>'
+   "Vae victus! <a href='/signout'>Sign out</a>
+    <form action="/broadcast_setup" method="post" enctype="multipart/form-data">
+        'Message: <input type="text" name="chat"/><br/>
+      <input type="submit" value="Send Broadcast"/></form><br/>
+
+     <form action="/message_setup" method="post" enctype="multipart/form-data">
+      Username: <input type="text" name="target_username"/><br/>
+      Message: <input type="text" name="secret_message"/><br/>
+      <input type="submit" value="Send Message"/></form><br/>
+
+      <a href = '/broadcasts'> Check Broadcasts</a>
+
+
 {% endblock %}
