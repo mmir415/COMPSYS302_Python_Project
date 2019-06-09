@@ -49,7 +49,7 @@ ip = IP
 #Below is the home IP
 #LISTEN_IP = "172.23.134.246"
 LISTEN_IP = ip
-LISTEN_PORT = 86
+LISTEN_PORT = 10010 
 
 def runMainApp():
     #set up the config

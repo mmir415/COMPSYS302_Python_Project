@@ -21,8 +21,19 @@ host_name = socket.gethostname()
 print(host_name, type(host_name))
 #ip = socket.gethostbyname(host_name)
 #ip = "192.168.1.15"
-ip = "172.23.134.246"
-ip = ip + ":" + "86"
+s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+try:
+    s.connect(('1.1.1.1',1))
+    IP = s.getsockname()[0]
+except:
+    IP = "172.23.134.246"
+finally:
+    s.close()
+
+#ip = socket.gethostbyname(host_name)
+ip = IP
+#ip = "172.23.134.246"
+ip = ip + ":" + "10010"
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 timing = str(time.time())
 
