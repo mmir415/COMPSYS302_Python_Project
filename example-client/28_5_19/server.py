@@ -252,7 +252,6 @@ class MainApp(object):
         Page += '<form action="/signin" method="post" enctype="multipart/form-data">'
         Page += 'Username: <input type="text" name="username"/><br/>'
         Page += 'Password: <input type="password" name="password"/><br/>'
-        Page += 'Encrypted Password: <input type = "password" name="encrypted_password"/><br/>'
         Page += '<input type="submit" value="Login"/></form>'
         return Page
     
@@ -287,7 +286,7 @@ class MainApp(object):
         
     # LOGGING IN AND OUT
     @cherrypy.expose
-    def signin(self, username=None, password=None,encrypted_password=None):
+    def signin(self, username=None, password=None):
         checking_user = username
         checking_password = password
         conn1 = sqlite3.connect("Users.db")
@@ -310,7 +309,7 @@ class MainApp(object):
             # hex_priv_key = "none"
             # for row in c.fetchall():
             #     hex_priv_key = (row[0])
-            hex_priv_key = MainApp.get_privatedata(self,username,password,encrypted_password)
+            hex_priv_key = MainApp.get_privatedata(self,username,password)
             if hex_priv_key == 1:
                 raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
             else:
@@ -572,7 +571,7 @@ class MainApp(object):
 
 
     @cherrypy.expose    
-    def get_privatedata(self,username,password,encrypted_password):
+    def get_privatedata(self,username,password):
 
 
         addkey_url = "http://cs302.kiwi.land/api/get_privatedata"
@@ -616,7 +615,7 @@ class MainApp(object):
         JSON_object = json.loads(data_in.decode(encoding))
         print(json.dumps(JSON_object,indent=4))
 
-        password = str(encrypted_password)
+        password = str(3302)
         byte = bytes(password, encoding = 'utf-8')
         key_password = password*16
         salt = bytes(key_password.encode('utf-8')[:16])
