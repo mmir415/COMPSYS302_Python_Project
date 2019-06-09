@@ -4,26 +4,26 @@
 <script>
         setTimeout(
             function() {
-                document.location.href = '/broadcasts';
+                document.location.href = '/messages';
             }
         , 10000);
 </script>
-{% if broadcasts %}
+{% if messages %}
 <table style="width:40%">
 <tr>
 <th>Name<th/>
-<th>Broadcast<th/>
+<th>Private Messages<th/>
 <th>Sender Public Key<th/>
 <th>Server Time<th/>
 <th>Signature<th>
 </tr>
-{% for broadcast_log in broadcasts %}
+{% for private_log in messages %}
 <tr>
-    <td>{{broadcast_log[0]}}</td>
-    <td>{{broadcast_log[1]}}</td>
-    <td>{{broadcast_log[2]}}</td>
-    <td>{{broadcast_log[3]}}</td>
-    <td>{{broadcast_log[4]}}</td>
+    <td>{{private_log[0]}}</td>
+    <td>{{private_log[1]}}</td>
+    <td>{{private_log[2]}}</td>
+    <td>{{private_log[3]}}</td>
+    <td>{{private_log[4]}}</td>
 </tr>
 {% endfor %}
 </table>

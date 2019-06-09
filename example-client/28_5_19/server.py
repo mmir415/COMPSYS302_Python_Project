@@ -261,6 +261,12 @@ class MainApp(object):
         broadcasts = self.broadcast_log()
         Page = viro.get_template("broadcasts.html")
         return Page.render(broadcasts = broadcasts )
+    
+    @cherrypy.expose
+    def messages(self):
+        messages = self.private_log()
+        Page = viro.get_template("messages.html")
+        return Page.render(messages = messages)
 
     @cherrypy.expose    
     def sum(self, a=0, b=0): #All inputs are strings by default
@@ -980,10 +986,9 @@ class MainApp(object):
         conn8 = sqlite3.connect("Users.db")
         c=conn8.cursor()
 
-        c.execute("""SELECT * FROM 'Private Messages'""")
+        c.execute("""SELECT * FROM 'Private Messages' DESC""")
         private_messages = c.fetchall()
-        for x in private_messages:
-            list(x)
+        private_messages = [list(x) for x in private_messages]
         
         return(private_messages)
 
