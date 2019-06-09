@@ -345,11 +345,12 @@ class MainApp(object):
                     for x in  (MainApp.listusers(self,username,password))["users"]:
                         #Now we do databases
                         ip_addresses = x["connection_address"]
-                        # try:
-                        #     MainApp.ping_check(self,username,password,ip_addresses,hex_priv_key)
-                        # except:
-                        #     print("Couldn't connect")
-                        #     pass
+                        try:
+                            wb = cherrypy.process.plugins.BackgroundTask(200,lambda: MainApp.ping_check(self,username,password,ip_addresses,hex_priv_key))
+                            wb.start()
+                        except:
+                            print("Couldn't connect")
+                            pass
                         userlist = [x["connection_location"],x["connection_updated_at"],x[ "incoming_pubkey"],x[ "username"],x[ "connection_address"],x["status"]]
                         try:
                             c.execute('''INSERT INTO Users(lastLocation,lastseenTime,publickey,username,ip,status)
