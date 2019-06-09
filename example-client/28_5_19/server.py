@@ -600,6 +600,44 @@ class MainApp(object):
         #             thread.start()
                     #MainApp.broadcast(self,username,ip_address,password,chat,hex_private_key)
             
+    @cherrypy.expose
+    def getloginserver_record(self, username,password):
+        addkey_url = "http://cs302.kiwi.land/api/get_loginserver_record"
+
+
+
+        #Header
+        # username = "keva419"
+        # password = "KimberleyEvans-Parker_576292546"
+        #key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
+        credentials = ('%s:%s' % (username, password))
+        b64_credentials = base64.b64encode(credentials.encode('ascii'))
+        headers = {
+            'Authorization': 'Basic %s' % b64_credentials.decode('ascii'),
+            'Content-Type' : 'application/json; charset=utf-8',
+        }
+
+        #Results after first usage
+        #{'loginserver_record': 'mmir415,(username)
+        #7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,(pubkey)
+        #1558398219.422035,(time)
+        #5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'} (signature)
+        #The public key provided in the message should be derived from the private key used to sign the message (i.e. what is used to create X-signature HTTP header) 
+        
+
+        #create request and open it into a response object
+        req = urllib.request.Request(url=addkey_url, headers=headers)
+        response = urllib.request.urlopen(req)
+        #read and process the received bytes
+
+        data = response.read() # read the received bytes
+        encoding = response.info().get_content_charset('utf-8') #load encoding if possible (default to utf-8)
+        response.close()
+
+        JSON_object = json.loads(data.decode(encoding))
+        server_record = (json.dumps(JSON_object,indent=4))
+        print(server_record)
+        return server_record
 
     @cherrypy.expose
     def broadcast_setup(self,chat):
@@ -651,7 +689,7 @@ class MainApp(object):
         # username = cherrypy.session['username']
         # password = cherrypy.session['password']
 
-        login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
+        login_server_record = self.getloginserver_record(username,password)
         signing_key = nacl.signing.SigningKey(hex_private_key, encoder=nacl.encoding.HexEncoder)
 
         # Serialize the verify key to send it to a third party
@@ -752,7 +790,7 @@ class MainApp(object):
                 
             #hex_priv_key = bytes(hex_priv_key,'utf-8')
             
-            MainApp.private_message(username,password,hex_priv_key,ip,target_user,hex_pub_key,secret_message)
+            self.private_message(username,password,hex_priv_key,ip,target_user,hex_pub_key,secret_message)
             
                     # conn3 = sqlite3.connect("Users.db")
         # c = conn3.cursor()
@@ -776,7 +814,7 @@ class MainApp(object):
         
         print("hello")
     
-    def private_message(username,password,hex_priv_key,ip,target_user,hex_pub_key,secret_message):
+    def private_message(self,username,password,hex_priv_key,ip,target_user,hex_pub_key,secret_message):
         #DMing Tomas
         #server_pubkey = '67e5107702196a80bff43b46c25531bc7f0cbbb44db5d24bd89077387abc73b6'
        # target_user = "tant836"
@@ -790,7 +828,7 @@ class MainApp(object):
         target_ip = ip
 #target_user = "tden328"
 
-        login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
+        login_server_record = self.getloginserver_record(username,password)
         timing = str(time.time())
         ENCODING = 'utf-8'
         secret_message = str(secret_message)
