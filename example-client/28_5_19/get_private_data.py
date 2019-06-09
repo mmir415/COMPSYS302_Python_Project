@@ -10,8 +10,10 @@ import nacl.pwhash.argon2i
 
 addkey_url = "http://cs302.kiwi.land/api/get_privatedata"
 
-username = "mmir415"
-password = "mmir415_339816700"
+# username = "mmir415"
+# password = "mmir415_339816700"
+username = "keva419"
+password = "KimberleyEvans-Parker_576292546"
 
 
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
@@ -67,6 +69,14 @@ plaintext = box.decrypt(encrypted_data,encoder = nacl.encoding.Base64Encoder)
 
 data = plaintext.decode('utf-8')
 print(data)
+data = json.loads(data.encode(encoding))
+print(data)
+print(type(data))
+private_keys = (data["prikeys"])
+private_key = private_keys[0]
+print(private_key)
+
+
 
 
 
