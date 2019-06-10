@@ -514,7 +514,7 @@ class MainApp(object):
 
         JSON_object = json.loads(data.decode(encoding))
 
-        print(json.dumps(JSON_object,indent=4))
+        #print(json.dumps(JSON_object,indent=4))
         return (JSON_object)
 
 
@@ -745,7 +745,7 @@ class MainApp(object):
            
         
         Page += "Successfully broadcasted, " + cherrypy.session['username'] + "!<br/>"
-        #raise cherrypy.HTTPRedirect('/signout')
+        raise cherrypy.HTTPRedirect('/messaging')
         #Page += "Vae victus! <a href='/signout'>Sign out</a>"
      
         
@@ -882,8 +882,8 @@ class MainApp(object):
         except Exception as E:
                 print(E)
                 Page+= "<p>This user is not online</p> <a href='/signout'>Sign out</a>"
-                pass
-        #raise cherrypy.HTTPRedirect('/signout')
+                #pass
+        raise cherrypy.HTTPRedirect('/messaging')
 
         
         print("hello")
