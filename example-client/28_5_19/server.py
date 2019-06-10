@@ -286,7 +286,7 @@ class MainApp(object):
         else:
             api_key_header =API_header(api_key,username)
             print(api_key_header)
-            private_key = nacl.signing.SigningKey.generate() #Private key
+           
             # c.execute("""UPDATE Users SET
             #     privatekey =? 
             #     WHERE username =? AND privatekey IS NULL""",(str(private_key),str(current_user)))
@@ -622,7 +622,13 @@ class MainApp(object):
         try:
             plaintext = box.decrypt(encrypted_data,encoder = nacl.encoding.Base64Encoder)
         except:
-            return 1
+            #if they have no private data to decrypt, return some
+            private_key = nacl.signing.SigningKey.generate() #Private key
+            print(private_key)
+            private_key_hex = private_key.encode(encoder=nacl.encoding.HexEncoder)
+            private_key_hex_str = private_key_hex.decode('utf-8')
+            print(private_key_hex_str)
+            return(private_key_hex_str)
         else:
 
             data = plaintext.decode('utf-8')
@@ -634,27 +640,11 @@ class MainApp(object):
             private_key = private_keys[0]
             print(private_key)
             return (private_key)
-        # @cherrypy.expose
-        # def threads(self):
-        #     user_list = MainApp.listusers(self,cherrypy.session['username'],cherrypy.session['password'])
-
-        #     for user in user_list:
-        #             ip_address = user_list["connection_address"]
-        #             thread = threading.Thread(target=broadcast,args=(cherrypy.session['username'],ip_address,cherrypy.session['password'],cherrypy.session['chat'],cherrypy.session['hex_private_key']))
-        #             print(ip_address)
-        #             thread.start()
-                    #MainApp.broadcast(self,username,ip_address,password,chat,hex_private_key)
             
     @cherrypy.expose
     def getloginserver_record(self, username,password):
         addkey_url = "http://cs302.kiwi.land/api/get_loginserver_record"
 
-
-
-        #Header
-        # username = "keva419"
-        # password = "KimberleyEvans-Parker_576292546"
-        #key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
         credentials = ('%s:%s' % (username, password))
         b64_credentials = base64.b64encode(credentials.encode('ascii'))
         headers = {
