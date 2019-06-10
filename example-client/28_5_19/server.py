@@ -50,7 +50,7 @@ class apiList(object):
                  }      
     @cherrypy.expose              
     def rx_broadcast(self):
-        
+
         received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
         
         print("Sender:")
@@ -111,61 +111,74 @@ class apiList(object):
         #Everything between here and en_message is to display who it is, and needs clean up
         print("Private Sender:")
         
-
-        en_message = received_data.get('encrypted_message').encode('utf-8')
-        current_user = str(apiList.username)
-        print(current_user)
-
-        
-        signing_key = nacl.signing.SigningKey(apiList.hex_priv_key, encoder=nacl.encoding.HexEncoder)
-        #verifykey = nacl.signing.VerifyKey(sender_pubkey, encoder=nacl.encoding.HexEncoder)
-        publickey = (signing_key.to_curve25519_private_key())
-
-        sealed_box = (nacl.public.SealedBox(publickey))
-        decrypted = (sealed_box.decrypt(en_message, encoder=nacl.encoding.HexEncoder))
-        de_message = (decrypted.decode('utf-8'))
-        #de_message = bytes(de_message,'utf-8')
-        sender_logins = (received_data)["loginserver_record"]
-        print (sender_logins)
-        login_list = (sender_logins.split(","))
-        print(login_list)
-        sender_name = login_list[0]
-        sender_pubkey = login_list[1]
-        sender_pubkey = login_list[1]
-        server_time = login_list[2]
-        sender_signature = received_data["signature"]
-        print(sender_name)
-        sender_created_at = received_data["sender_created_at"]
-        print(sender_name)
-
-
-        sender_list = [sender_name,de_message,sender_pubkey,server_time,sender_signature,sender_created_at]
-        conn5 = sqlite3.connect("Users.db")
-        c = conn5.cursor()
-        
-        try:
-            c.execute('''INSERT INTO 'Private Messages' (username,message,sender_public_key,server_time,signature,sender_created_at)
-                VALUES(?,?,?,?,?,?)''',sender_list)
-        except sqlite3.IntegrityError:
-            pass
-        conn5.commit()
-        conn5.close()
-
-        print("Private Message:")
-        print(en_message)
-        print(de_message)
-
-        response = {
-            'response':'ok'
-        }
-        response = json.dumps(response)
+        if apiList.username == None:
+            response = {
+            'response':'error'
+            }
+            response = json.dumps(response)
         #for x in  (response)["loginserver_record"]:
         
           #  try:
           #      ip_address = x.get("connection_address")
           #      print(ip_address)
 
-        return (response)
+            return (response)
+        else:
+
+            en_message = received_data.get('encrypted_message').encode('utf-8')
+            current_user = str(apiList.username)
+            print(current_user)
+
+            
+            signing_key = nacl.signing.SigningKey(apiList.hex_priv_key, encoder=nacl.encoding.HexEncoder)
+            #verifykey = nacl.signing.VerifyKey(sender_pubkey, encoder=nacl.encoding.HexEncoder)
+            publickey = (signing_key.to_curve25519_private_key())
+
+            sealed_box = (nacl.public.SealedBox(publickey))
+            decrypted = (sealed_box.decrypt(en_message, encoder=nacl.encoding.HexEncoder))
+            de_message = (decrypted.decode('utf-8'))
+            #de_message = bytes(de_message,'utf-8')
+            sender_logins = (received_data)["loginserver_record"]
+            print (sender_logins)
+            login_list = (sender_logins.split(","))
+            print(login_list)
+            sender_name = login_list[0]
+            sender_pubkey = login_list[1]
+            sender_pubkey = login_list[1]
+            server_time = login_list[2]
+            sender_signature = received_data["signature"]
+            print(sender_name)
+            sender_created_at = received_data["sender_created_at"]
+            print(sender_name)
+
+
+            sender_list = [sender_name,de_message,sender_pubkey,server_time,sender_signature,sender_created_at]
+            conn5 = sqlite3.connect("Users.db")
+            c = conn5.cursor()
+            
+            try:
+                c.execute('''INSERT INTO 'Private Messages' (username,message,sender_public_key,server_time,signature,sender_created_at)
+                    VALUES(?,?,?,?,?,?)''',sender_list)
+            except sqlite3.IntegrityError:
+                pass
+            conn5.commit()
+            conn5.close()
+
+            print("Private Message:")
+            print(en_message)
+            print(de_message)
+
+            response = {
+                'response':'ok'
+            }
+            response = json.dumps(response)
+            #for x in  (response)["loginserver_record"]:
+            
+            #  try:
+            #      ip_address = x.get("connection_address")
+            #      print(ip_address)
+
+            return (response)
 
     
 
@@ -335,7 +348,7 @@ class MainApp(object):
                 MainApp.username = username
                 MainApp.password = password
 
-                br = cherrypy.process.plugins.BackgroundTask(60,lambda: MainApp.report(self,username,password,hex_priv_key))
+                br = cherrypy.process.plugins.BackgroundTask(270,lambda: MainApp.report(self,username,password,hex_priv_key))
 
                 br.start()
 
@@ -353,7 +366,7 @@ class MainApp(object):
                     #Now we do databases
                     ip_addresses = x["connection_address"]
                     try:
-                        wb = cherrypy.process.plugins.BackgroundTask(200,lambda: MainApp.ping_check(self,username,password,ip_addresses,hex_priv_key))
+                        wb = cherrypy.process.plugins.BackgroundTask(300,lambda: MainApp.ping_check(self,username,password,ip_addresses,hex_priv_key))
                         wb.start()
                     except:
                         print("Couldn't connect")
