@@ -342,10 +342,6 @@ class MainApp(object):
                     bl = cherrypy.process.plugins.BackgroundTask(30,lambda : MainApp.listusers(self,username,password))
                     bl.start()
                     
-                    print("broadcast log below")
-                    print(MainApp.broadcast_log(self))
-                    print("private message log")
-                    print(MainApp.private_log(self))
 
                     print("Users log below")
                     print(MainApp.users_log(self))
@@ -749,7 +745,7 @@ class MainApp(object):
            
         
         Page += "Successfully broadcasted, " + cherrypy.session['username'] + "!<br/>"
-        raise cherrypy.HTTPRedirect('/signout')
+        #raise cherrypy.HTTPRedirect('/signout')
         #Page += "Vae victus! <a href='/signout'>Sign out</a>"
      
         
@@ -887,7 +883,7 @@ class MainApp(object):
                 print(E)
                 Page+= "<p>This user is not online</p> <a href='/signout'>Sign out</a>"
                 pass
-        raise cherrypy.HTTPRedirect('/signout')
+        #raise cherrypy.HTTPRedirect('/signout')
 
         
         print("hello")
