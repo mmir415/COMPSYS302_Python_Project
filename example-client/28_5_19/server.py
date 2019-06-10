@@ -50,6 +50,7 @@ class apiList(object):
                  }      
     @cherrypy.expose              
     def rx_broadcast(self):
+        
         received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
         
         print("Sender:")
@@ -295,80 +296,96 @@ class MainApp(object):
             # hex_priv_key = "none"
             # for row in c.fetchall():
             #     hex_priv_key = (row[0])
-            hex_priv_key = MainApp.get_privatedata(self,username,password)
-            if hex_priv_key == 1:
-                raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
-            else:
+            privs = MainApp.get_privatedata(self,username,password)
+            if privs == 1:
+                        #if they have no private data to decrypt, return some
+                private_key = nacl.signing.SigningKey.generate() #Private key
+                print(private_key)
+                private_key_hex = private_key.encode(encoder=nacl.encoding.HexEncoder)
+                private_key_hex_str = private_key_hex.decode('utf-8')
+                hex_priv_key = private_key_hex_str
                 cherrypy.session['hex_priv_key'] = hex_priv_key
-              
-                print(hex_priv_key)
-                print("CHECK RIGHT HERE")
-                print(hex_priv_key)
-                error = MainApp.ping(self,username, password,hex_priv_key,api_key_header)
-            #hex_priv_key = bytes(hex_priv_key,'utf-8')
-            #error = MainApp.ping(self,username, password,hex_priv_key)
+            else:
+                private_keys = (privs["prikeys"])
+                hex_priv_key = private_keys[0]
+                cherrypy.session['hex_priv_key'] = hex_priv_key
+
+
             
-                if (error == 0):
-            # & (checked == 0)):
-                    cherrypy.session['username'] = username
-                    cherrypy.session['password'] = password
-                    cherrypy.session['hex_priv_key'] = hex_priv_key
-                    apiList.username = username
-                    apiList.hex_priv_key = hex_priv_key
-                    MainApp.username = username
-                    MainApp.password = password
 
-                    br = cherrypy.process.plugins.BackgroundTask(60,lambda: MainApp.report(self,username,password,hex_priv_key))
+            # if hex_priv_key == 1:
+            #     raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
+            # else:
+            #     cherrypy.session['hex_priv_key'] = hex_priv_key
+            
+            print(hex_priv_key)
+            print("CHECK RIGHT HERE")
+            print(hex_priv_key)
+            error = MainApp.ping(self,username, password,hex_priv_key,api_key_header)
+        #hex_priv_key = bytes(hex_priv_key,'utf-8')
+        #error = MainApp.ping(self,username, password,hex_priv_key)
+        
+            if (error == 0):
+        # & (checked == 0)):
+                cherrypy.session['username'] = username
+                cherrypy.session['password'] = password
+                cherrypy.session['hex_priv_key'] = hex_priv_key
+                apiList.username = username
+                apiList.hex_priv_key = hex_priv_key
+                MainApp.username = username
+                MainApp.password = password
 
-                    br.start()
+                br = cherrypy.process.plugins.BackgroundTask(60,lambda: MainApp.report(self,username,password,hex_priv_key))
 
-                    bl = cherrypy.process.plugins.BackgroundTask(30,lambda : MainApp.listusers(self,username,password))
-                    bl.start()
-                    
+                br.start()
 
-                    print("Users log below")
-                    print(MainApp.users_log(self))
-                    print("Users log finished")
-                    
+                bl = cherrypy.process.plugins.BackgroundTask(30,lambda : MainApp.listusers(self,username,password))
+                bl.start()
+                
 
-                    
-                    for x in  (MainApp.listusers(self,username,password))["users"]:
-                        #Now we do databases
-                        ip_addresses = x["connection_address"]
-                        try:
-                            wb = cherrypy.process.plugins.BackgroundTask(200,lambda: MainApp.ping_check(self,username,password,ip_addresses,hex_priv_key))
-                            wb.start()
-                        except:
-                            print("Couldn't connect")
-                            pass
-                        userlist = [x["connection_location"],x["connection_updated_at"],x[ "incoming_pubkey"],x[ "username"],x[ "connection_address"],x["status"]]
-                        try:
-                            c.execute('''INSERT INTO Users(lastLocation,lastseenTime,publickey,username,ip,status)
-                        VALUES(?,?,?,?,?,?)''',userlist)
-                        except sqlite3.IntegrityError:
-                            pass
+                print("Users log below")
+                print(MainApp.users_log(self))
+                print("Users log finished")
+                
 
-                        #print(hex_priv_key)
-                            
-                        
-                        # wb.run()
-                    conn1.commit()
-                    conn1.close() 
+                
+                for x in  (MainApp.listusers(self,username,password))["users"]:
+                    #Now we do databases
+                    ip_addresses = x["connection_address"]
                     try:
-                        print("Sup")
-                        #MainApp.private_message(self,username,password)
+                        wb = cherrypy.process.plugins.BackgroundTask(200,lambda: MainApp.ping_check(self,username,password,ip_addresses,hex_priv_key))
+                        wb.start()
                     except:
-                        print("Offline")
+                        print("Couldn't connect")
                         pass
-                    
+                    userlist = [x["connection_location"],x["connection_updated_at"],x[ "incoming_pubkey"],x[ "username"],x[ "connection_address"],x["status"]]
+                    try:
+                        c.execute('''INSERT INTO Users(lastLocation,lastseenTime,publickey,username,ip,status)
+                    VALUES(?,?,?,?,?,?)''',userlist)
+                    except sqlite3.IntegrityError:
+                        pass
+
+                    #print(hex_priv_key)
                         
-                    MainApp.receive_message(self)
                     
+                    # wb.run()
+                conn1.commit()
+                conn1.close() 
+                try:
+                    print("Sup")
+                    #MainApp.private_message(self,username,password)
+                except:
+                    print("Offline")
+                    pass
+                
                     
-                #    pubkeyAutho()
-                    raise cherrypy.HTTPRedirect('/messaging')
-                else:
-                    raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
+                MainApp.receive_message(self)
+                
+                
+            #    pubkeyAutho()
+                raise cherrypy.HTTPRedirect('/messaging')
+            else:
+                raise cherrypy.HTTPRedirect('/login?bad_attempt=1')
 
     @cherrypy.expose
     def signout(self):
@@ -622,13 +639,7 @@ class MainApp(object):
         try:
             plaintext = box.decrypt(encrypted_data,encoder = nacl.encoding.Base64Encoder)
         except:
-            #if they have no private data to decrypt, return some
-            private_key = nacl.signing.SigningKey.generate() #Private key
-            print(private_key)
-            private_key_hex = private_key.encode(encoder=nacl.encoding.HexEncoder)
-            private_key_hex_str = private_key_hex.decode('utf-8')
-            print(private_key_hex_str)
-            return(private_key_hex_str)
+            return 1
         else:
 
             data = plaintext.decode('utf-8')
@@ -636,10 +647,7 @@ class MainApp(object):
             data = json.loads(data.encode(encoding))
             print(data)
             print(type(data))
-            private_keys = (data["prikeys"])
-            private_key = private_keys[0]
-            print(private_key)
-            return (private_key)
+            return (data)
             
     @cherrypy.expose
     def getloginserver_record(self, username,password):
