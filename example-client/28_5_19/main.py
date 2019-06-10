@@ -2,8 +2,8 @@
 """ main.py
 
     COMPSYS302 - Software Design - Example Client Webapp
-    Current Author/Maintainer: Hammond Pearce (hammond.pearce@auckland.ac.nz)
-    Last Edited: March 2019
+    Current Author/Maintainer: Mohammad Hassaan Mirza (mmir415@aucklanduni.ac.nz)
+    Last Edited: June 2019
 
     This program uses the CherryPy web server (from www.cherrypy.org).
 """
