@@ -6,13 +6,13 @@ import nacl.encoding
 import nacl.signing
 import nacl.utils
 
-addkey_url = "http://cs302.kiwi.land/api/get_privatedata"
+addkey_url = "http://cs302.kiwi.land/api/get_loginserver_record"
 
 
 
 #Header
-username = "mmir415"
-password = "mmir415_339816700"
+username = "keva419"
+password = "KimberleyEvans-Parker_576292546"
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
 credentials = ('%s:%s' % (username, password))
 b64_credentials = base64.b64encode(credentials.encode('ascii'))
@@ -39,4 +39,12 @@ encoding = response.info().get_content_charset('utf-8') #load encoding if possib
 response.close()
 
 JSON_object = json.loads(data.decode(encoding))
-print(json.dumps(JSON_object,indent=4))
+jason = (json.dumps(JSON_object,indent=4))
+
+for key in sorted(JSON_object.values()):
+    login_server = key
+    print (key)
+    break
+   
+print("sup")
+print(login_server)

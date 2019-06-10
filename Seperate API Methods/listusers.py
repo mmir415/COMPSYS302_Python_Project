@@ -6,6 +6,14 @@ import nacl.encoding
 import nacl.signing
 import nacl.utils
 
+import socket
+
+host_name = socket.gethostname()
+print(host_name, type(host_name))
+ip = socket.gethostbyname(host_name)
+
+print(ip)
+
 addkey_url = "http://cs302.kiwi.land/api/list_users"
 
 
@@ -31,4 +39,32 @@ encoding = response.info().get_content_charset('utf-8') #load encoding if possib
 response.close()
 
 JSON_object = json.loads(data.decode(encoding))
-print(JSON_object)
+print(json.dumps(JSON_object,indent=4))
+
+i=0
+user = "amon838"
+connection = 0
+for x in JSON_object["users"]:
+  # user = x["username"]
+   if x["username"] == user:
+      connection = x["connection_address"]
+      break
+print(user,connection)
+
+active_users = []
+for y in JSON_object["users"]:
+   active_users.append(y["username"])
+
+print(active_users)
+private_key = nacl.signing.SigningKey.generate() #Private key
+print(private_key)
+private_key_hex = private_key.encode(encoder=nacl.encoding.HexEncoder)
+private_key_hex_str = private_key_hex.decode('utf-8')
+print(private_key_hex_str)
+ 
+   #print(x["username"])
+   #if x["username"] == "crol453":
+       #i = 1
+       #if i == 1:
+           #print(x["connection_address"])
+           #print(x["incoming_pubkey"])

@@ -10,8 +10,15 @@ import time
 username = "mmir415"
 password = "mmir415_339816700"
 key = b'00ab2fa15db1273d0859d2fed51e386dfd63f2368bff963a750544bf90b8901d'
-server_pubkey = '11c8c33b6052ad73a7a29e832e97e31f416dedb7c6731a6f456f83a344488ec0'
-target_user = "admin"
+#server_pubkey = '11c8c33b6052ad73a7a29e832e97e31f416dedb7c6731a6f456f83a344488ec0'
+#server_pubkey = '67e5107702196a80bff43b46c25531bc7f0cbbb44db5d24bd89077387abc73b6'
+
+#Thomas DMs
+server_pubkey = "ecc575ea1916c57d5f11a1135d4d03f514d893d3889f53bfad7634cc24877a66"
+#target_user = "admin"
+target_user = "keva419"
+#target_user = "tden328"
+
 
 login_server_record = 'mmir415,7e74f2b1978473d9943b0178f3bfe538b215f84c99bc70ccf3ca67b0e3bc13a5,1558398219.422035,5326677c6a44df9bc95b2d62907b8bcc86b02f6c90dbbaeb4065089d66aec655f0b6e9eda3469ac09418160363cadda75c5a75577ead997b79ac6c3392722c0c'
 timing = str(time.time())
@@ -26,7 +33,9 @@ pubkey_hex = signing_key.verify_key.encode(encoder = nacl.encoding.HexEncoder)
     
 pubkey_hex_str = pubkey_hex.decode(ENCODING)
 
-message = bytes("Ground Control to Major Tom",ENCODING)
+message = bytes("You're a good team partner",ENCODING)
+#message = bytes((chr(128184)),ENCODING)
+
 server_pubkey_bytes = bytes(server_pubkey,ENCODING)
 
 vkey = nacl.signing.VerifyKey(server_pubkey_bytes, encoder=nacl.encoding.HexEncoder)
@@ -40,7 +49,7 @@ signed = signing_key.sign(message_bytes, encoder=nacl.encoding.HexEncoder)
 
 signature_hex_str = signed.signature.decode(ENCODING)
 
-addkey_url = "http://cs302.kiwi.land/api/rx_privatemessage"
+addkey_url = "http://172.23.74.180:1234/api/rx_privatemessage"
 
 credentials = ('%s:%s' % (username, password))
 b64_credentials = base64.b64encode(credentials.encode('ascii'))
