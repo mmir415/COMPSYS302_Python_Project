@@ -88,18 +88,18 @@ class apiList(object):
         response = json.dumps(response)
         return (response)
 
-    # @cherrypy.expose
-    # def ping_check(self):
-    #     received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
-    #     print("Sender:")
-    #     sender_logins = (received_data)["connection_address"]
-    #     print (sender_logins)       
-    #     response = {
-    #         'response':'ok',
-    #         'my_time' : timing
-    #     }
-    #     response = json.dumps(response)
-    #     return (response)
+    @cherrypy.expose
+    def ping_check(self):
+        received_data = json.loads(cherrypy.request.body.read().decode('utf-8'))
+        print("Sender:")
+        sender_logins = (received_data)["connection_address"]
+        print (sender_logins)       
+        response = {
+            'response':'ok',
+            'my_time' : timing
+        }
+        response = json.dumps(response)
+        return (response)
 
 
 
@@ -115,23 +115,6 @@ class apiList(object):
         current_user = str(apiList.username)
         print(current_user)
 
-        # current_user = cherrypy.session['username']
-        # conn4 = sqlite3.connect("Users.db")
-        # c = conn4.cursor()
-        
-
-        #priv_hex_key = cherrypy.session['hex_priv_key']
-        
-        # print(cherrypy.session['username'])
-        # print(cherrypy.session['hex_priv_key'])
-        # c.execute("""SELECT privatekey FROM Users WHERE username =?""",(current_user,))
-        # for row in c.fetchall():
-        #     priv_hex_key = (row[0])
-        #     priv_hex_key = bytes(priv_hex_key,'utf-8')
-
-        # conn4.commit()
-        # conn4.close()
-        
         
         signing_key = nacl.signing.SigningKey(apiList.hex_priv_key, encoder=nacl.encoding.HexEncoder)
         #verifykey = nacl.signing.VerifyKey(sender_pubkey, encoder=nacl.encoding.HexEncoder)
