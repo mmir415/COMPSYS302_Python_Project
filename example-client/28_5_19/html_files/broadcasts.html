@@ -13,17 +13,13 @@
 <tr>
 <th>Name<th/>
 <th>Broadcast<th/>
-<th>Sender Public Key<th/>
 <th>Server Time<th/>
-<th>Signature<th>
 </tr>
 {% for broadcast_log in broadcasts %}
 <tr>
     <td>{{broadcast_log[0]}}</td>
     <td>{{broadcast_log[1]}}</td>
-    <td>{{broadcast_log[2]}}</td>
     <td>{{broadcast_log[3]}}</td>
-    <td>{{broadcast_log[4]}}</td>
 </tr>
 {% endfor %}
 </table>
