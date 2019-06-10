@@ -9,20 +9,15 @@
         , 10000);
 </script>
 {% if messages %}
-<table style="width:40%">
+<table style="width:60%">
 <tr>
-<th>Name<th/>
-<th>Private Messages<th/>
-<th>Sender Public Key<th/>
+<th>Name and Message<th/>
 <th>Server Time<th/>
-<th>Signature<th>
 </tr>
 {% for private_log in messages %}
 <tr>
     <td>{{private_log[0]}}</td>
     <td>{{private_log[1]}}</td>
-    <td>{{private_log[2]}}</td>
-    <td>{{private_log[3]}}</td>
     <td>{{private_log[4]}}</td>
 </tr>
 {% endfor %}
