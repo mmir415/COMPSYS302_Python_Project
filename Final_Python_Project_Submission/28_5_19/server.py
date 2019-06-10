@@ -587,7 +587,7 @@ class MainApp(object):
             response.close()
 
             JSON_object = json.loads(data.decode(encoding))
-            print(json.dumps(JSON_object,indent=4))
+            
             
 
 
@@ -657,7 +657,9 @@ class MainApp(object):
 
             data = plaintext.decode('utf-8')
             print(data)
-            data = json.loads(data.encode(encoding))
+            data = str(data)
+            print(data)
+            data = json.loads(data)
             print(data)
             print(type(data))
             return (data)
